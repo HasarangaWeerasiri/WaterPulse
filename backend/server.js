@@ -1,17 +1,22 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
 
-
-const express = require('express');
-const mongoose = require('mongoose');
+dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use("/", (req, res, next) => {
-  res.send("Working");
-})
+app.use(cors({origin: "http://localhost:5173", credentials: false}));
+app.use(express.json());
 
-mongoose.connect("")
-.then(()=> console.log("Connected to MongoDB"))
-.then(() => {
-  app.listen(5000);
-}).catch((err) => console.log(err));
+mongoose.connect(process.env.MONGO_URI, )
+ .then(() => { console.log("MongoDB connection established Successfully");
+
+ app.listen(process.PORT, () => {
+  console.log("Server is running on port " + process.PORT);
+ });
+})
+.catch((err) =>{
+  console.error("MongoDB connection error:", err);
+});
