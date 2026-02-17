@@ -47,10 +47,12 @@ export const RegisterPage = () => {
     try {
       const { confirmPassword, ...registrationData } = formData;
       await register(registrationData);
-      navigate('/home');
+      // Small delay to allow state to update
+      setTimeout(() => {
+        navigate('/home');
+      }, 100);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
