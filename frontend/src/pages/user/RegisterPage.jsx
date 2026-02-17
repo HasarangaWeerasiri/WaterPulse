@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -47,10 +47,12 @@ export const RegisterPage = () => {
     try {
       const { confirmPassword, ...registrationData } = formData;
       await register(registrationData);
-      navigate('/home');
+      // Small delay to allow state to update
+      setTimeout(() => {
+        navigate('/home');
+      }, 100);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };

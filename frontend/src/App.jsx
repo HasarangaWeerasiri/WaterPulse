@@ -9,7 +9,11 @@ import { AuthorityDashboard } from './pages/dashboard/AuthorityDashboard'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
 
 function App() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, initializing } = useAuth()
+
+  if (initializing) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
 
   return (
     <Routes>

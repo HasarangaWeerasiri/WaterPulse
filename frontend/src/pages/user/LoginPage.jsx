@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -18,17 +18,19 @@ export const LoginPage = () => {
     try {
       const result = await login(email, password);
       
-      // Redirect based on role
-      if (result.user.role === 'admin') {
-        navigate('/admin-dashboard');
-      } else if (result.user.role === 'authority') {
-        navigate('/authority-dashboard');
-      } else {
-        navigate('/home');
-      }
+      // Small delay to allow state to update
+      setTimeout(() => {
+        // Redirect based on role
+        if (result.user.role === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (result.user.role === 'authority') {
+          navigate('/authority-dashboard');
+        } else {
+          navigate('/home');
+        }
+      }, 100);
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };

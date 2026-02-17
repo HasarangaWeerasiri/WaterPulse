@@ -8,8 +8,34 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [initializing, setInitializing] = useState(true);
 
   const API_BASE_URL = 'http://localhost:5000/api/auth';
+
+  // Verify token on app load
+  useEffect(() => {
+    const verifyToken = async () => {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        try {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          // Verify token by calling a verify endpoint or getting user data
+          const response = await axios.get(`${API_BASE_URL}/me`);
+          setToken(storedToken);
+          setUser(response.data.user);
+        } catch (err) {
+          // Token is invalid, clear it
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+          setToken(null);
+          setUser(null);
+        }
+      }
+      setInitializing(false);
+    };
+
+    verifyToken();
+  }, []);
 
   // Set axios default header with token
   useEffect(() => {
@@ -67,6 +93,7 @@ export const AuthProvider = ({ children }) => {
     token,
     loading,
     error,
+    initializing,
     register,
     login,
     logout,
