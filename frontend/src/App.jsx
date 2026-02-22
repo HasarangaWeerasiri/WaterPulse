@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/user/LoginPage'
 import { RegisterPage } from './pages/user/RegisterPage'
 import { HomePage } from './pages/dashboard/HomePage'
@@ -18,6 +19,7 @@ function App() {
   return (
     <Routes>
       {/* Public Routes */}
+      <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <LandingPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/home" /> : <LoginPage />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/home" /> : <RegisterPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -47,9 +49,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
-      {/* Default Route */}
-      <Route path="/" element={<Navigate to={isAuthenticated ? '/home' : '/login'} />} />
     </Routes>
   )
 }
