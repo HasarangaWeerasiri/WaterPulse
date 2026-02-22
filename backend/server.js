@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import reportRoutes from "./routes/reportRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
 
 dotenv.config();
 
@@ -23,6 +24,9 @@ app.get('/api/health', (req, res) => {
 
 // Report routes
 app.use("/api/reports", reportRoutes);
+
+// Task routes
+app.use("/api/tasks", taskRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
  .then(() => { 
