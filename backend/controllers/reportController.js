@@ -1,5 +1,6 @@
 import ContaminationReport from "../models/contaminationReport.js";
 import axios from "axios";
+import reportService from "../services/reportService.js";
 
 // Create Report (citizen only)
 export const createReport = async (req, res) => {
@@ -177,5 +178,24 @@ export const deleteReport = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get pending reports (for authority/admin)
+export const getPendingReports = async (req, res) => {
+  try {
+    const pendingReports = await reportService.getPendingReports();
+    
+    res.status(200).json({
+      message: "Pending reports retrieved successfully",
+      count: pendingReports.length,
+      reports: pendingReports
+    });
+  } catch (error) {
+    console.error("Get pending reports error:", error);
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
   }
 };
