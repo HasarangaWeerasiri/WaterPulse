@@ -5,7 +5,8 @@ import {
   getReportById,
   getReportsByRadius,
   updateReportStatus,
-  deleteReport
+  deleteReport,
+  getMyReports
 } from "../controllers/reportController.js";
 
 import { verifyToken, checkRole } from "../middleware/authMiddleware.js";
@@ -28,6 +29,13 @@ router.get(
   getAllReports
 );
 
+router.get(
+  "/my-reports",
+  verifyToken,
+  checkRole(["citizen"]),
+  getMyReports
+);
+
 // Get a single report by ID (any authenticated user, but citizens only see their own)
 router.get(
   "/:id",
@@ -35,12 +43,13 @@ router.get(
   getReportById
 );
 
-// Get reports within a radius (for map view)
-router.get(
-  "/",
-  verifyToken,
-  getReportsByRadius
-);
+
+// // Get reports within a radius (for map view)
+// router.get(
+//   "/",
+//   verifyToken,
+//   getReportsByRadius
+// );
 
 // Update report status
 router.put(
