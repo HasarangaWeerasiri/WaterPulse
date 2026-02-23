@@ -11,7 +11,7 @@ const contaminationReportSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
-    required: true
+    required: false
   },
   address: {
     type: String
