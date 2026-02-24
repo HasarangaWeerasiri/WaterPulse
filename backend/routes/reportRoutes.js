@@ -6,6 +6,7 @@ import {
   getReportsByRadius,
   updateReportStatus,
   deleteReport,
+  getMyReports,
   getPendingReports
 } from "../controllers/reportController.js";
 
@@ -29,6 +30,13 @@ router.get(
   getAllReports
 );
 
+router.get(
+  "/my-reports",
+  verifyToken,
+  checkRole(["citizen"]),
+  getMyReports
+);
+
 // Get pending reports (admin & authority)
 router.get(
   "/pending",
@@ -43,6 +51,7 @@ router.get(
   verifyToken,
   getReportById
 );
+
 
 // Get reports within a radius (for map view)
 router.get(
