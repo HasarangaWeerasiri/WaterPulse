@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
 import safeZoneRoutes from "./routes/safeZoneRoutes.js";
 
 dotenv.config();
@@ -24,6 +25,9 @@ app.get("/api/health", (req, res) => {
 
 // Report routes
 app.use("/api/reports", reportRoutes);
+
+// Task routes
+app.use("/api/tasks", taskRoutes);
 
 // Safe Zone routes
 app.use("/api/safe-zones", safeZoneRoutes);

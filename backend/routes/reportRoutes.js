@@ -4,8 +4,11 @@ import {
   getAllReports,
   getReportById,
   getReportsByRadius,
+  updateReport,
   updateReportStatus,
-  deleteReport
+  deleteReport,
+  getMyReports,
+  getPendingReports
 } from "../controllers/reportController.js";
 
 import { verifyToken, checkRole } from "../middleware/authMiddleware.js";
@@ -28,12 +31,29 @@ router.get(
   getAllReports
 );
 
+// Get my reports (citizen)
+router.get(
+  "/my-reports",
+  verifyToken,
+  checkRole(["citizen"]),
+  getMyReports
+);
+
+// Get pending reports (admin & authority)
+router.get(
+  "/pending",
+  verifyToken,
+  checkRole(["admin", "authority"]),
+  getPendingReports
+);
+
 // Get a single report by ID (any authenticated user, but citizens only see their own)
 router.get(
   "/:id",
   verifyToken,
   getReportById
 );
+
 
 // Get reports within a radius (for map view)
 router.get(
@@ -43,17 +63,24 @@ router.get(
 );
 
 // Update report status
+// Update full report details (title, description, location, image)
 router.put(
   "/:id",
+  verifyToken,
+  updateReport
+);
+
+// Update report status only
+router.put(
+  "/:id/status",
   verifyToken,
   updateReportStatus
 );
 
-// Delete a report (admin only)
+// Delete a report (citizen: own only, admin/authority: any)
 router.delete(
   "/:id",
   verifyToken,
-  checkRole(["admin"]),
   deleteReport
 );
 
