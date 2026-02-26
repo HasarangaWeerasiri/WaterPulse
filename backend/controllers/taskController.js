@@ -160,7 +160,7 @@ export const updateTaskStatus = async (req, res) => {
       });
     }
 
-    const task = await taskService.updateTaskStatus(req.params.id, status);
+    const task = await taskService.updateTaskStatus(req.params.id, status, req.userId, req.userRole);
 
     res.status(200).json({
       message: 'Task status updated successfully',
@@ -168,7 +168,9 @@ export const updateTaskStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Update task status error:', error);
-    const statusCode = error.message === 'Task not found' ? 404 : 500;
+    const statusCode =
+      error.message === 'Task not found'              ? 404 :
+      error.message.startsWith('Forbidden')           ? 403 : 500;
     res.status(statusCode).json({
       message: error.message || 'Server error',
       error: error.message

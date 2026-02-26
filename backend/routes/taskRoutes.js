@@ -49,10 +49,11 @@ router.post(
   createTask
 );
 
-// Update task status
+// Update task status (admin: any task | authority: own tasks only)
 router.put(
   '/:id/status',
   verifyToken,
+  checkRole(['admin', 'authority']),
   updateTaskStatus
 );
 

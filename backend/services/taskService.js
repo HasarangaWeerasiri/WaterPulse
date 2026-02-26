@@ -161,31 +161,34 @@ class TaskService {
    * Update task status
    * @param {string} taskId - Task ID
    * @param {string} status - New status
+   * @param {string} requestingUserId - ID of the user making the request
+   * @param {string} requestingUserRole - Role of the user making the request
    * @returns {Promise<Object>} Updated task
    */
-  async updateTaskStatus(taskId, status) {
-    try {
-      const task = await Task.findById(taskId);
-      if (!task) {
-        throw new Error('Task not found');
-      }
-
-      task.status = status;
-      if (status === 'completed') {
-        task.completedAt = new Date();
-      }
-
-      await task.save();
-      await task.populate([
-        { path: 'reportId', select: 'title description status address' },
-        { path: 'assignedTo', select: 'firstName lastName email location' },
-        { path: 'assignedBy', select: 'firstName lastName email' }
-      ]);
-
-      return task;
-    } catch (error) {
-      throw new Error(`Failed to update task status: ${error.message}`);
+  async updateTaskStatus(taskId, status, requestingUserId, requestingUserRole) {
+    const task = await Task.findById(taskId);
+    if (!task) {
+      throw new Error('Task not found');
     }
+
+    // Authorities may only update tasks that are assigned to them (SRP: ownership rule)
+    if (requestingUserRole === 'authority' && task.assignedTo.toString() !== requestingUserId) {
+      throw new Error('Forbidden: You can only update tasks assigned to you');
+    }
+
+    task.status = status;
+    if (status === 'completed') {
+      task.completedAt = new Date();
+    }
+
+    await task.save();
+    await task.populate([
+      { path: 'reportId', select: 'title description status address' },
+      { path: 'assignedTo', select: 'firstName lastName email location' },
+      { path: 'assignedBy', select: 'firstName lastName email' }
+    ]);
+
+    return task;
   }
 
   /**
