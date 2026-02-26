@@ -145,7 +145,7 @@ export const getMyTasks = async (req, res) => {
  */
 export const updateTaskStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, cancellationReason } = req.body;
 
     if (!status) {
       return res.status(400).json({
@@ -160,7 +160,7 @@ export const updateTaskStatus = async (req, res) => {
       });
     }
 
-    const task = await taskService.updateTaskStatus(req.params.id, status, req.userId, req.userRole);
+    const task = await taskService.updateTaskStatus(req.params.id, status, req.userId, req.userRole, cancellationReason);
 
     res.status(200).json({
       message: 'Task status updated successfully',
@@ -174,6 +174,59 @@ export const updateTaskStatus = async (req, res) => {
     res.status(statusCode).json({
       message: error.message || 'Server error',
       error: error.message
+    });
+  }
+};
+
+/**
+ * Update a task's editable fields (admin only)
+ * PUT /api/tasks/:id
+ * Body: { title, description, priority, dueDate, assignedTo }
+ */
+export const updateTask = async (req, res) => {
+  try {
+    const { title, description, priority, dueDate, assignedTo } = req.body;
+
+    const task = await taskService.updateTask(req.params.id, {
+      title,
+      description,
+      priority,
+      dueDate,
+      assignedTo,
+    });
+
+    res.status(200).json({
+      message: 'Task updated successfully',
+      task,
+    });
+  } catch (error) {
+    console.error('Update task error:', error);
+    const statusCode =
+      error.message === 'Task not found'              ? 404 :
+      error.message.includes('Invalid priority')      ? 400 :
+      error.message.includes('authority users')        ? 400 : 500;
+    res.status(statusCode).json({
+      message: error.message || 'Server error',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Permanently delete a task (admin only)
+ * DELETE /api/tasks/:id
+ */
+export const deleteTask = async (req, res) => {
+  try {
+    await taskService.deleteTask(req.params.id);
+
+    res.status(200).json({ message: 'Task deleted successfully' });
+  } catch (error) {
+    console.error('Delete task error:', error);
+    const statusCode = error.message === 'Task not found' ? 404 : 500;
+    res.status(statusCode).json({
+      message: error.message || 'Server error',
+      error: error.message,
     });
   }
 };

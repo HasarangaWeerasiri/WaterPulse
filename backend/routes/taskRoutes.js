@@ -4,7 +4,9 @@ import {
   getTasks,
   getTaskById,
   getMyTasks,
+  updateTask,
   updateTaskStatus,
+  deleteTask,
   getAuthorities
 } from '../controllers/taskController.js';
 import { verifyToken, checkRole } from '../middleware/authMiddleware.js';
@@ -55,6 +57,22 @@ router.put(
   verifyToken,
   checkRole(['admin', 'authority']),
   updateTaskStatus
+);
+
+// Update task fields — title, description, priority, dueDate, assignedTo (admin only)
+router.put(
+  '/:id',
+  verifyToken,
+  checkRole(['admin']),
+  updateTask
+);
+
+// Permanently delete a task (admin only)
+router.delete(
+  '/:id',
+  verifyToken,
+  checkRole(['admin']),
+  deleteTask
 );
 
 export default router;

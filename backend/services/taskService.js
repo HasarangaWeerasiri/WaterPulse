@@ -1,6 +1,7 @@
 import Task from '../models/task.js';
 import ContaminationReport from '../models/contaminationReport.js';
 import User from '../models/user.js';
+import notificationService from './notificationService.js';
 
 /**
  * Task Service - Handles business logic for task management
@@ -27,6 +28,12 @@ class TaskService {
       const report = await ContaminationReport.findById(reportId);
       if (!report) {
         throw new Error('Report not found');
+      }
+
+      // Prevent duplicate assignment: check if an active (non-cancelled) task already exists for this report
+      const existingTask = await Task.findOne({ reportId, status: { $ne: 'cancelled' } });
+      if (existingTask) {
+        throw new Error('This report is already assigned as an active task and cannot be assigned again');
       }
 
       // Validate assigned user exists and is an authority
@@ -60,12 +67,24 @@ class TaskService {
 
       await task.save();
 
-      // Populate related fields
+      // Mark report as Confirmed so it no longer appears in Pending Reports
+      await ContaminationReport.findByIdAndUpdate(reportId, { status: 'Confirmed' });
+
+      // Populate related fields (reportedBy nested for citizen notification)
       await task.populate([
-        { path: 'reportId', select: 'title description status address' },
+        {
+          path: 'reportId',
+          select: 'title description status address reportedBy',
+          populate: { path: 'reportedBy', select: 'firstName lastName email' }
+        },
         { path: 'assignedTo', select: 'firstName lastName email location' },
         { path: 'assignedBy', select: 'firstName lastName email' }
       ]);
+
+      // Fire-and-forget: email failure must never block task creation
+      notificationService.notifyTaskAssigned(task).catch((err) =>
+        console.error('[TaskService] notifyTaskAssigned failed silently:', err.message)
+      );
 
       return task;
     } catch (error) {
@@ -165,7 +184,7 @@ class TaskService {
    * @param {string} requestingUserRole - Role of the user making the request
    * @returns {Promise<Object>} Updated task
    */
-  async updateTaskStatus(taskId, status, requestingUserId, requestingUserRole) {
+  async updateTaskStatus(taskId, status, requestingUserId, requestingUserRole, cancellationReason = null) {
     const task = await Task.findById(taskId);
     if (!task) {
       throw new Error('Task not found');
@@ -176,19 +195,92 @@ class TaskService {
       throw new Error('Forbidden: You can only update tasks assigned to you');
     }
 
+    // Cancellation requires a reason
+    if (status === 'cancelled') {
+      if (!cancellationReason || cancellationReason.trim() === '') {
+        throw new Error('A cancellation reason is required when cancelling a task');
+      }
+      task.cancellationReason = cancellationReason.trim();
+
+      // Restore the linked report back to Unverified (Pending Reports)
+      await ContaminationReport.findByIdAndUpdate(task.reportId, { status: 'Unverified' });
+    }
+
     task.status = status;
     if (status === 'completed') {
       task.completedAt = new Date();
     }
 
     await task.save();
+
+    // Populate related fields (email included for notifications)
     await task.populate([
       { path: 'reportId', select: 'title description status address' },
       { path: 'assignedTo', select: 'firstName lastName email location' },
       { path: 'assignedBy', select: 'firstName lastName email' }
     ]);
 
+    // Fire-and-forget: email failure must never block status updates
+    notificationService.notifyTaskStatusUpdated(task).catch((err) =>
+      console.error('[TaskService] notifyTaskStatusUpdated failed silently:', err.message)
+    );
+
     return task;
+  }
+
+  /**
+   * Update a task's editable fields (admin only)
+   * @param {string} taskId   - Task ID
+   * @param {Object} updates  - Fields to update: title, description, priority, dueDate, assignedTo
+   * @returns {Promise<Object>} Updated and populated task
+   */
+  async updateTask(taskId, updates) {
+    const task = await Task.findById(taskId);
+    if (!task) throw new Error('Task not found');
+
+    const { title, description, priority, dueDate, assignedTo } = updates;
+
+    // Validate priority if provided
+    if (priority && !['low', 'medium', 'high'].includes(priority)) {
+      throw new Error('Invalid priority. Must be: low, medium, or high');
+    }
+
+    // Validate new assignee if reassigning
+    if (assignedTo) {
+      const user = await User.findById(assignedTo);
+      if (!user) throw new Error('Assigned user not found');
+      if (user.role !== 'authority') throw new Error('Task can only be assigned to authority users');
+      task.assignedTo = assignedTo;
+    }
+
+    if (title       !== undefined) task.title       = title;
+    if (description !== undefined) task.description = description;
+    if (priority    !== undefined) task.priority    = priority;
+    if (dueDate     !== undefined) task.dueDate     = dueDate ? new Date(dueDate) : undefined;
+
+    await task.save();
+    await task.populate([
+      { path: 'reportId',   select: 'title description status address' },
+      { path: 'assignedTo', select: 'firstName lastName email location' },
+      { path: 'assignedBy', select: 'firstName lastName email' }
+    ]);
+
+    return task;
+  }
+
+  /**
+   * Permanently delete a task (admin only)
+   * @param {string} taskId - Task ID
+   * @returns {Promise<void>}
+   */
+  async deleteTask(taskId) {
+    const task = await Task.findById(taskId);
+    if (!task) throw new Error('Task not found');
+
+    // Restore the linked report back to Unverified so it reappears in Pending Reports
+    await ContaminationReport.findByIdAndUpdate(task.reportId, { status: 'Unverified' });
+
+    await task.deleteOne();
   }
 
   /**
