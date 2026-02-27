@@ -242,7 +242,13 @@ class NotificationService {
    * @returns {Promise<void>}
    */
   async notifyTaskStatusUpdated(task) {
-    if (task.status === 'completed') await this._notifyTaskCompleted(task);
+    if (task.status === 'completed') {
+      // Notify both admin and citizen concurrently
+      await Promise.allSettled([
+        this._notifyTaskCompleted(task),
+        this._notifyCitizenTaskCompleted(task),
+      ]);
+    }
     if (task.status === 'cancelled') await this._notifyTaskCancelled(task);
   }
 
@@ -293,6 +299,69 @@ class NotificationService {
     await emailService.sendEmail({
       to: admin.email,
       subject: `[WaterPulse] Task Completed: ${task.title}`,
+      html,
+    });
+  }
+
+  async _notifyCitizenTaskCompleted(task) {
+    const citizen = task.reportId?.reportedBy;
+
+    if (!citizen?.email) {
+      console.warn('[NotificationService] _notifyCitizenTaskCompleted: citizen has no email — skipping.');
+      return;
+    }
+
+    const citizenName   = this._fullName(citizen);
+    const reportTitle   = task.reportId?.title || 'Your report';
+    const location      = task.reportId?.address || 'the reported location';
+    const authorityName = this._fullName(task.assignedTo);
+    const completedAt   = task.completedAt
+      ? new Date(task.completedAt).toLocaleString()
+      : new Date().toLocaleString();
+
+    const html = this._template('Issue Resolved — WaterPulse', `
+      <h2 style="margin:0 0 4px;color:#111827;font-size:20px;">✅ Your Report Has Been Resolved</h2>
+      <p style="margin:0 0 24px;color:#6b7280;font-size:14px;">
+        Hi <strong>${citizenName}</strong>, we're pleased to let you know that the issue you
+        reported has been investigated and resolved by our field team.
+      </p>
+
+      <h3 style="margin:0 0 20px;color:#1d4ed8;font-size:18px;">${reportTitle}</h3>
+
+      <table width="100%" cellpadding="8" cellspacing="0"
+             style="border-collapse:collapse;font-size:14px;color:#374151;margin-bottom:24px;">
+        <tr style="background:#f9fafb;">
+          <td style="border:1px solid #e5e7eb;width:160px;font-weight:bold;">📍 Location</td>
+          <td style="border:1px solid #e5e7eb;">${location}</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #e5e7eb;font-weight:bold;">👷 Resolved by</td>
+          <td style="border:1px solid #e5e7eb;">${authorityName}</td>
+        </tr>
+        <tr style="background:#f9fafb;">
+          <td style="border:1px solid #e5e7eb;font-weight:bold;">🕐 Resolved at</td>
+          <td style="border:1px solid #e5e7eb;">${completedAt}</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #e5e7eb;font-weight:bold;">📋 Status</td>
+          <td style="border:1px solid #e5e7eb;">
+            <span style="background:#16a34a;color:#fff;padding:2px 10px;
+                         border-radius:9999px;font-size:12px;font-weight:bold;">
+              Resolved
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0;font-size:14px;color:#6b7280;">
+        Thank you for helping keep our water supply safe.
+        Your contribution made a difference.
+      </p>
+    `);
+
+    await emailService.sendEmail({
+      to: citizen.email,
+      subject: `[WaterPulse] Your report "${reportTitle}" has been resolved`,
       html,
     });
   }

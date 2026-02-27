@@ -29,10 +29,11 @@ router.get(
   getMyTasks
 );
 
-// Get all tasks (admin can see all, authority can see their own)
+// Get all tasks (admin only)
 router.get(
   '/',
   verifyToken,
+  checkRole(['admin']),
   getTasks
 );
 
@@ -53,6 +54,13 @@ router.post(
 
 // Update task status (admin: any task | authority: own tasks only)
 router.put(
+  '/:id/status',
+  verifyToken,
+  checkRole(['admin', 'authority']),
+  updateTaskStatus
+);
+
+router.patch(
   '/:id/status',
   verifyToken,
   checkRole(['admin', 'authority']),
