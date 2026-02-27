@@ -1,4 +1,5 @@
 import waterLogService from "../services/waterLogService.js";
+import WaterLog from "../models/waterLog.js";
 
 /**
  * Water Log Controller - Handles HTTP requests for water quality logs
@@ -248,7 +249,6 @@ export const getAnalyticsTrends = async (req, res) => {
     );
 
     // Execute aggregation
-    const WaterLog = require("../models/waterLog.js").default;
     const trends = await WaterLog.aggregate(pipeline);
 
     res.status(200).json({
