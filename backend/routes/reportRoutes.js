@@ -7,8 +7,7 @@ import {
   updateReport,
   updateReportStatus,
   deleteReport,
-  getMyReports,
-  getPendingReports
+  getMyReports
 } from "../controllers/reportController.js";
 
 import { verifyToken, checkRole } from "../middleware/authMiddleware.js";
@@ -39,13 +38,6 @@ router.get(
   getMyReports
 );
 
-// Get pending reports (admin & authority)
-router.get(
-  "/pending",
-  verifyToken,
-  checkRole(["admin", "authority"]),
-  getPendingReports
-);
 
 // Get a single report by ID (any authenticated user, but citizens only see their own)
 router.get(
