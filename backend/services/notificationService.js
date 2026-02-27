@@ -8,18 +8,16 @@ import emailService from './emailService.js';
  * DIP : Depends on the emailService abstraction, not on Resend directly.
  *
  * Email triggers:
- * ┌──────────────────────┬──────────────────────────┬──────────────────────────────┐
- * │ Event                │ Recipient(s)             │ Content                      │
- * ├──────────────────────┼──────────────────────────┼──────────────────────────────┤
- * │ Task created         │ Authority (assignedTo)   │ Assignment details           │
- * │ Task created         │ Citizen  (reportedBy)    │ Report acknowledged notice   │
- * │ Task → completed     │ Admin    (assignedBy)    │ Completion summary           │
- * │ Task → cancelled     │ Authority (assignedTo)   │ Cancellation alert           │
- * └──────────────────────┴──────────────────────────┴──────────────────────────────┘
+ *  Event                 Recipient(s)              Content                      
+ *  Task created          Authority (assignedTo)    Assignment details           
+ *  Task created          Citizen  (reportedBy)     Report acknowledged notice   
+ *  Task → completed      Admin    (assignedBy)     Completion summary           
+ *  Task → cancelled      Authority (assignedTo)    Cancellation alert          
+
  */
 class NotificationService {
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
+  //  Helpers 
 
   _fullName(user) {
     if (!user) return 'Unknown';
