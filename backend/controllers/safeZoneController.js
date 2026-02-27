@@ -212,6 +212,93 @@ export const updateSafeZone = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────
+// @route   GET /api/safe-zones/:id/weather
+// @access  Public
+// @desc    Get current weather + contamination risk for a safe zone
+// ─────────────────────────────────────────────
+export const getSafeZoneWeather = async (req, res) => {
+  try {
+    const safeZone = await SafeZone.findById(req.params.id);
+
+    if (!safeZone) {
+      return res.status(404).json({ message: "Safe zone not found" });
+    }
+
+    const [lng, lat] = safeZone.location.coordinates;
+
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+    if (!apiKey || apiKey === "your_openweathermap_api_key_here") {
+      return res
+        .status(503)
+        .json({ message: "OpenWeatherMap API key not configured" });
+    }
+
+    const weatherResponse = await axios.get(
+      "https://api.openweathermap.org/data/2.5/weather",
+      {
+        params: {
+          lat,
+          lon: lng,
+          appid: apiKey,
+          units: "metric",
+        },
+      },
+    );
+
+    const data = weatherResponse.data;
+    const weatherMain = data.weather[0].main; // e.g. "Rain", "Clear"
+    const weatherDesc = data.weather[0].description; // e.g. "heavy intensity rain"
+    const temp = data.main.temp;
+    const humidity = data.main.humidity;
+    const windSpeed = data.wind.speed;
+
+    // ── Contamination risk assessment ──────────────────────────────────────
+    const riskyConditions = ["Rain", "Drizzle", "Thunderstorm", "Snow"];
+    const isRisky = riskyConditions.includes(weatherMain);
+
+    let riskLevel = "Low";
+    let riskMessage = "Conditions look safe. Water source appears normal.";
+
+    if (isRisky && humidity > 85) {
+      riskLevel = "High";
+      riskMessage =
+        "Heavy precipitation detected. Outdoor wells and open tanks may be contaminated. Use with caution.";
+    } else if (isRisky) {
+      riskLevel = "Medium";
+      riskMessage =
+        "Rain detected nearby. Monitor open water sources for possible runoff contamination.";
+    } else if (humidity > 90) {
+      riskLevel = "Medium";
+      riskMessage =
+        "Very high humidity. Check tanker seals and covered sources for moisture ingress.";
+    }
+    // ───────────────────────────────────────────────────────────────────────
+
+    res.status(200).json({
+      safeZone: {
+        id: safeZone._id,
+        name: safeZone.name,
+        type: safeZone.type,
+      },
+      weather: {
+        condition: weatherMain,
+        description: weatherDesc,
+        temperature: temp,
+        humidity,
+        windSpeed,
+      },
+      contamination: {
+        riskLevel,
+        riskMessage,
+      },
+    });
+  } catch (error) {
+    console.error("getSafeZoneWeather error:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ─────────────────────────────────────────────
 // @route   DELETE /api/safe-zones/:id
 // @access  Admin | Authority
 // @desc    Permanently remove a safe zone

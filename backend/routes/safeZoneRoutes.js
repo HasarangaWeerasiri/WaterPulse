@@ -4,6 +4,7 @@ import {
   getAllSafeZones,
   getNearbySafeZones,
   getSafeZoneById,
+  getSafeZoneWeather,
   updateSafeZone,
   deleteSafeZone,
 } from "../controllers/safeZoneController.js";
@@ -22,6 +23,9 @@ router.get("/nearby", getNearbySafeZones);
 
 // GET /api/safe-zones/:id  →  single safe zone detail
 router.get("/:id", getSafeZoneById);
+
+// GET /api/safe-zones/:id/weather  →  current weather + contamination risk
+router.get("/:id/weather", getSafeZoneWeather);
 
 // ── Protected Routes (Admin / Authority only) ────────────────────────────────
 
