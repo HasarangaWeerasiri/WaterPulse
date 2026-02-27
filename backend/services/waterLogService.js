@@ -1,5 +1,6 @@
 import WaterLog from "../models/waterLog.js";
 import ContaminationReport from "../models/contaminationReport.js";
+import smsService from "./smsService.js"; // new SMS gateway helper
 
 /**
  * Water Log Service - Handles business logic for water quality logs
@@ -70,6 +71,38 @@ class WaterLogService {
       // Cross-model status sync: Update Report status if reportId exists
       if (log.reportId) {
         await this.syncReportStatus(log.reportId, safetyRating);
+
+        // --- SMS notification logic (non-blocking) ------------------------------
+        try {
+          // load report + reporter contact info
+          const report = await ContaminationReport.findById(log.reportId)
+            .populate("reportedBy", "firstName lastName phoneNumber");
+
+          const reporter = report?.reportedBy;
+          const location = report?.address || "specified location";
+
+          if (reporter?.phoneNumber) {
+            let smsMsg;
+            const fullName = `${reporter.firstName || ""} ${reporter.lastName || ""}`.trim();
+
+            if (safetyRating === "Safe") {
+              smsMsg = `Hello ${fullName}, your water contamination report for ${location} has been Resolved. Testing confirms the water is now contamination-free!`;
+            } else if (safetyRating === "Unsafe") {
+              smsMsg = `Alert ${reporter.firstName || ""}: Your report for ${location} has been Verified. Testing confirms high contamination. Please avoid usage until further notice.`;
+            }
+
+            if (smsMsg) {
+              try {
+                await smsService.sendAlert(reporter.phoneNumber, smsMsg);
+              } catch (smsError) {
+                console.error("[SmsService] sendAlert failed:", smsError.message);
+                // don't rethrow: SMS failure shouldn't prevent log creation
+              }
+            }
+          }
+        } catch (smsLookupError) {
+          console.error("Failed to fetch report/recipient for SMS:", smsLookupError.message);
+        }
       }
 
       return log;
