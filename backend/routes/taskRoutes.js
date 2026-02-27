@@ -4,7 +4,9 @@ import {
   getTasks,
   getTaskById,
   getMyTasks,
+  updateTask,
   updateTaskStatus,
+  deleteTask,
   getAuthorities
 } from '../controllers/taskController.js';
 import { verifyToken, checkRole } from '../middleware/authMiddleware.js';
@@ -27,10 +29,11 @@ router.get(
   getMyTasks
 );
 
-// Get all tasks (admin can see all, authority can see their own)
+// Get all tasks (admin only)
 router.get(
   '/',
   verifyToken,
+  checkRole(['admin']),
   getTasks
 );
 
@@ -49,11 +52,35 @@ router.post(
   createTask
 );
 
-// Update task status
+// Update task status (admin: any task | authority: own tasks only)
 router.put(
   '/:id/status',
   verifyToken,
+  checkRole(['admin', 'authority']),
   updateTaskStatus
+);
+
+router.patch(
+  '/:id/status',
+  verifyToken,
+  checkRole(['admin', 'authority']),
+  updateTaskStatus
+);
+
+// Update task fields — title, description, priority, dueDate, assignedTo (admin only)
+router.put(
+  '/:id',
+  verifyToken,
+  checkRole(['admin']),
+  updateTask
+);
+
+// Permanently delete a task (admin only)
+router.delete(
+  '/:id',
+  verifyToken,
+  checkRole(['admin']),
+  deleteTask
 );
 
 export default router;

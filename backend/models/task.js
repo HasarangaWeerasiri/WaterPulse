@@ -43,6 +43,14 @@ const taskSchema = new mongoose.Schema({
   },
   completedAt: {
     type: Date
+  },
+  cancellationReason: {
+    type: String,
+    trim: true
+  },
+  resolutionNotes: {
+    type: String,
+    trim: true
   }
 }, { 
   timestamps: true 
