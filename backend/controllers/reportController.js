@@ -7,12 +7,12 @@ export const createReport = async (req, res) => {
   try {
     const { title, description, latitude, longitude, imageUrl } = req.body;
 
-    // ✅ Remove image from required check
+    // Remove image from required check
     if (!title || !description || !latitude || !longitude) {
       return res.status(400).json({ message: "Title, description, latitude and longitude are required" });
     }
 
-    // ✅ If image exists, validate it
+    // If image exists, validate it
     if (imageUrl) {
       const urlPattern = /^https?:\/\//i;
       if (!urlPattern.test(imageUrl)) {
@@ -60,7 +60,7 @@ export const createReport = async (req, res) => {
       reportedBy: req.userId
     });
 
-    // ✅ Only add image if provided
+    // Only add image if provided
     if (imageUrl) {
       report.imageUrl = imageUrl;
     }
@@ -306,21 +306,4 @@ export const deleteReport = async (req, res) => {
   }
 };
 
-// Get pending reports (for authority/admin)
-export const getPendingReports = async (req, res) => {
-  try {
-    const pendingReports = await reportService.getPendingReports();
-    
-    res.status(200).json({
-      message: "Pending reports retrieved successfully",
-      count: pendingReports.length,
-      reports: pendingReports
-    });
-  } catch (error) {
-    console.error("Get pending reports error:", error);
-    res.status(500).json({ 
-      message: "Server error", 
-      error: error.message 
-    });
-  }
-};
+
