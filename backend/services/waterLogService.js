@@ -93,7 +93,12 @@ class WaterLogService {
 
             if (smsMsg) {
               try {
-                await smsService.sendAlert(reporter.phoneNumber, smsMsg);
+                console.log("[SmsService] attempting to send SMS", {
+                  to: reporter.phoneNumber,
+                  message: smsMsg
+                });
+                const smsResult = await smsService.sendAlert(reporter.phoneNumber, smsMsg);
+                console.log("[SmsService] sendAlert succeeded", smsResult);
               } catch (smsError) {
                 console.error("[SmsService] sendAlert failed:", smsError.message);
                 // don't rethrow: SMS failure shouldn't prevent log creation
