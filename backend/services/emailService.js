@@ -1,55 +1,49 @@
-import * as brevo from '@getbrevo/brevo';
+import { Resend } from 'resend';
 
 /**
- * Email Service — low-level Brevo (Sendinblue) API wrapper
+ * Email Service — low-level Resend API wrapper
  *
- * SRP : Only responsibility is sending emails via Brevo.
+ * SRP : Only responsibility is sending emails via Resend.
  *       It knows nothing about tasks, reports, or who gets notified when.
  *
  * OCP : Other notification channels (SMS, push) are added in
  *       notificationService without touching this file.
  *
  * Designed to fail gracefully:
- *   - Missing BREVO_API_KEY   → logs a warning, returns false, never throws
+ *   - Missing RESEND_API_KEY  → logs a warning, returns false, never throws
  *   - Send failure at runtime → logs the error,  returns false, never throws
  *   Neither case interrupts the caller's business logic.
  *
- * Free tier: 300 emails/day — https://app.brevo.com
+ * Free tier: 3,000 emails/month — https://resend.com
  */
 class EmailService {
   constructor() {
-    /** @type {brevo.TransactionalEmailsApi | null} */
-    this._apiInstance = null;
+    /** @type {Resend | null} */
+    this._client = null;
   }
 
   // ─── Private ───────────────────────────────────────────────────────────────
 
   /**
-   * Lazily initialise the Brevo client on first use.
+   * Lazily initialise the Resend client on first use.
    * Returns null when the API key is not configured.
-   * @returns {brevo.TransactionalEmailsApi | null}
+   * @returns {Resend | null}
    */
-  _getApiInstance() {
-    if (this._apiInstance) return this._apiInstance;
+  _getClient() {
+    if (this._client) return this._client;
 
-    const { BREVO_API_KEY } = process.env;
+    const { RESEND_API_KEY } = process.env;
 
-    if (!BREVO_API_KEY) {
+    if (!RESEND_API_KEY) {
       console.warn(
-        '[EmailService] BREVO_API_KEY is not set — email notifications are disabled.\n' +
-        '              Add BREVO_API_KEY to your .env file to enable them.'
+        '[EmailService] RESEND_API_KEY is not set — email notifications are disabled.\n' +
+        '              Add RESEND_API_KEY to your .env file to enable them.'
       );
       return null;
     }
 
-    const instance = new brevo.TransactionalEmailsApi();
-    instance.setApiKey(
-      brevo.TransactionalEmailsApiApiKeys.apiKey,
-      BREVO_API_KEY
-    );
-
-    this._apiInstance = instance;
-    return this._apiInstance;
+    this._client = new Resend(RESEND_API_KEY);
+    return this._client;
   }
 
   // ─── Public ─────────────────────────────────────────────────────────────────
@@ -65,29 +59,35 @@ class EmailService {
    * @returns {Promise<boolean>} true on success, false if misconfigured or send failed
    */
   async sendEmail({ to, subject, html, text }) {
-    const apiInstance = this._getApiInstance();
-    if (!apiInstance) return false;
+    const client = this._getClient();
+    if (!client) return false;
 
     if (!to) {
       console.warn('[EmailService] sendEmail called without a recipient — skipping.');
       return false;
     }
 
-    const email = new brevo.SendSmtpEmail();
-    email.to              = [{ email: to }];
-    email.sender          = { email: process.env.BREVO_FROM_EMAIL, name: 'WaterPulse' };
-    email.subject         = subject;
-    email.htmlContent     = html;
-    if (text) email.textContent = text;
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'WaterPulse <onboarding@resend.dev>';
 
     try {
-      const result = await apiInstance.sendTransacEmail(email);
-      console.info(`[EmailService] Email sent to ${to} — MessageId: ${result.body?.messageId ?? 'n/a'}`);
+      const { data, error } = await client.emails.send({
+        from: fromEmail,
+        to,
+        subject,
+        html,
+        ...(text && { text }),
+      });
+
+      if (error) {
+        console.error(`[EmailService] Failed to send to ${to}: ${error.message}`);
+        return false;
+      }
+
+      console.info(`[EmailService] Email sent to ${to} — MessageId: ${data?.id ?? 'n/a'}`);
       return true;
     } catch (err) {
       // Never re-throw: email failure must not crash core business logic
-      const detail = err.response?.body?.message ?? err.message;
-      console.error(`[EmailService] Failed to send to ${to}: ${detail}`);
+      console.error(`[EmailService] Failed to send to ${to}: ${err.message}`);
       return false;
     }
   }

@@ -30,6 +30,11 @@ class TaskService {
         throw new Error('Report not found');
       }
 
+      // Pre-creation check: cannot assign a task to an already resolved report
+      if (report.status === 'Resolved') {
+        throw new Error('Cannot create a task for a report that is already Resolved');
+      }
+
       // Prevent duplicate assignment: check if an active (non-cancelled) task already exists for this report
       const existingTask = await Task.findOne({ reportId, status: { $ne: 'cancelled' } });
       if (existingTask) {
@@ -206,6 +211,14 @@ class TaskService {
       await ContaminationReport.findByIdAndUpdate(task.reportId, { status: 'Unverified' });
     }
 
+    // Auto-update report to Confirmed when task moves to In-Progress
+    if (status === 'in_progress') {
+      await ContaminationReport.findOneAndUpdate(
+        { _id: task.reportId, status: 'Unverified' },
+        { status: 'Confirmed' }
+      );
+    }
+
     task.status = status;
     if (status === 'completed') {
       task.completedAt = new Date();
@@ -215,7 +228,11 @@ class TaskService {
 
     // Populate related fields (email included for notifications)
     await task.populate([
-      { path: 'reportId', select: 'title description status address' },
+      {
+        path: 'reportId',
+        select: 'title description status address reportedBy',
+        populate: { path: 'reportedBy', select: 'firstName lastName email' }
+      },
       { path: 'assignedTo', select: 'firstName lastName email location' },
       { path: 'assignedBy', select: 'firstName lastName email' }
     ]);
@@ -238,7 +255,7 @@ class TaskService {
     const task = await Task.findById(taskId);
     if (!task) throw new Error('Task not found');
 
-    const { title, description, priority, dueDate, assignedTo } = updates;
+    const { title, description, priority, dueDate, assignedTo, resolutionNotes } = updates;
 
     // Validate priority if provided
     if (priority && !['low', 'medium', 'high'].includes(priority)) {
@@ -253,10 +270,11 @@ class TaskService {
       task.assignedTo = assignedTo;
     }
 
-    if (title       !== undefined) task.title       = title;
-    if (description !== undefined) task.description = description;
-    if (priority    !== undefined) task.priority    = priority;
-    if (dueDate     !== undefined) task.dueDate     = dueDate ? new Date(dueDate) : undefined;
+    if (title            !== undefined) task.title            = title;
+    if (description      !== undefined) task.description      = description;
+    if (priority         !== undefined) task.priority         = priority;
+    if (dueDate          !== undefined) task.dueDate          = dueDate ? new Date(dueDate) : undefined;
+    if (resolutionNotes  !== undefined) task.resolutionNotes  = resolutionNotes;
 
     await task.save();
     await task.populate([

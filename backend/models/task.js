@@ -47,6 +47,10 @@ const taskSchema = new mongoose.Schema({
   cancellationReason: {
     type: String,
     trim: true
+  },
+  resolutionNotes: {
+    type: String,
+    trim: true
   }
 }, { 
   timestamps: true 

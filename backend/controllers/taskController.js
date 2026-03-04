@@ -185,7 +185,7 @@ export const updateTaskStatus = async (req, res) => {
  */
 export const updateTask = async (req, res) => {
   try {
-    const { title, description, priority, dueDate, assignedTo } = req.body;
+    const { title, description, priority, dueDate, assignedTo, resolutionNotes } = req.body;
 
     const task = await taskService.updateTask(req.params.id, {
       title,
@@ -193,6 +193,7 @@ export const updateTask = async (req, res) => {
       priority,
       dueDate,
       assignedTo,
+      resolutionNotes,
     });
 
     res.status(200).json({
