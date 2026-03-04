@@ -21,11 +21,12 @@ router.get("/all", getAllSafeZones);
 //   → 5 closest safe zones to the user's position
 router.get("/nearby", getNearbySafeZones);
 
+// GET /api/safe-zones/:id/weather  →  current weather + contamination risk
+// ⚠️ Must be registered BEFORE /:id to avoid route conflict
+router.get("/:id/weather", getSafeZoneWeather);
+
 // GET /api/safe-zones/:id  →  single safe zone detail
 router.get("/:id", getSafeZoneById);
-
-// GET /api/safe-zones/:id/weather  →  current weather + contamination risk
-router.get("/:id/weather", getSafeZoneWeather);
 
 // ── Protected Routes (Admin / Authority only) ────────────────────────────────
 
