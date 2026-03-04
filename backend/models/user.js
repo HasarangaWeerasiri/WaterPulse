@@ -10,7 +10,18 @@ const userSchema = new mongoose.Schema({
         enum: ['citizen', 'authority', 'admin'], 
         default: 'citizen' 
     },
-    phoneNumber: { type: String },
+    phoneNumber: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: function(v) {
+                // Sri Lankan mobile number regex: allows 0 or +94 prefix and ensures 10 digits
+                return /^(?:0|94|\+94)?7(?:0|1|2|4|5|6|7|8)\d{7}$/.test(v);
+            },
+            message: props => `${props.value} is not a valid Sri Lankan phone number!`
+        }
+    },
     location: {
         city: String,
         district: String 

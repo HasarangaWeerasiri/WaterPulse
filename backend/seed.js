@@ -26,7 +26,7 @@ const seedDatabase = async () => {
         email: 'citizen@test.com',
         password: hashedPassword,
         role: 'citizen',
-        phoneNumber: '+1 (555) 100-0001',
+        phoneNumber: '0771234567',
         location: {
           city: 'New York',
           district: 'Manhattan'
@@ -38,7 +38,7 @@ const seedDatabase = async () => {
         email: 'authority@test.com',
         password: hashedPassword,
         role: 'authority',
-        phoneNumber: '+1 (555) 200-0001',
+        phoneNumber: '0771234568',
         location: {
           city: 'New York',
           district: 'Brooklyn'
@@ -50,7 +50,7 @@ const seedDatabase = async () => {
         email: 'admin@test.com',
         password: hashedPassword,
         role: 'admin',
-        phoneNumber: '+1 (555) 300-0001',
+        phoneNumber: '0771234569',
         location: {
           city: 'New York',
           district: 'Queens'
@@ -62,7 +62,7 @@ const seedDatabase = async () => {
         email: 'mike@test.com',
         password: hashedPassword,
         role: 'citizen',
-        phoneNumber: '+1 (555) 100-0002',
+        phoneNumber: '0779876543',
         location: {
           city: 'New York',
           district: 'Manhattan'
@@ -74,7 +74,7 @@ const seedDatabase = async () => {
         email: 'sarah@test.com',
         password: hashedPassword,
         role: 'authority',
-        phoneNumber: '+1 (555) 200-0002',
+        phoneNumber: '0779876544',
         location: {
           city: 'New York',
           district: 'Manhattan'

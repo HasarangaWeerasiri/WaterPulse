@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import safeZoneRoutes from "./routes/safeZoneRoutes.js";
+import waterLogRoutes from "./routes/waterLogRoutes.js";
 
 dotenv.config();
 
@@ -31,6 +32,9 @@ app.use("/api/tasks", taskRoutes);
 
 // Safe Zone routes
 app.use("/api/safe-zones", safeZoneRoutes);
+
+// Water Log routes
+app.use("/api/logs", waterLogRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
