@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { Navbar } from './components/Navbar'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/user/LoginPage'
 import { RegisterPage } from './pages/user/RegisterPage'
@@ -17,7 +18,9 @@ function App() {
   }
 
   return (
-    <Routes>
+    <>
+      <Navbar />
+      <Routes>
       {/* Public Routes */}
       <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <LandingPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/home" /> : <LoginPage />} />
@@ -50,6 +53,7 @@ function App() {
         }
       />
     </Routes>
+    </>
   )
 }
 
