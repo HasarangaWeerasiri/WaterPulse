@@ -17,7 +17,7 @@ export const LandingPage = () => {
 
       {/* Content Container */}
       <div className="relative z-10 w-full h-full flex items-center px-8 mt-[200px]">
-        <div className="flex flex-col gap-8 max-w-3xl ml-12">
+        <div className="flex flex-col gap-8 max-w-3xl ml-6">
           {/* Main Header */}
           <h1 className="text-5xl md:text-5xl font-black text-white leading-none text-left tracking-tight font-universo">
             Keeping<br />
