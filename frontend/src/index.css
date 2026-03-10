@@ -1,1 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap');
 @import "tailwindcss";
+
+@font-face {
+  font-family: 'Fontspring Demo Universo';
+  src: url('/fonts/Fontspring-DEMO-universo-regular.otf') format('opentype');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Fontspring Demo Universo';
+  src: url('/fonts/Fontspring-DEMO-universo-black.otf') format('opentype');
+  font-weight: 900;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue Light';
+  src: url('/fonts/HelveticaNeue Light.ttf') format('truetype');
+  font-weight: 300;
+}
+
+h1, h2, h3, nav, .font-universo {
+  font-family: 'Fontspring Demo Universo', 'Arial', sans-serif;
+}
+
+.font-helvetica {
+  font-family: 'Helvetica Neue Light', sans-serif !important;
+}

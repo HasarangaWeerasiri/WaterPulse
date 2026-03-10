@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Universalis+ADF+Std&display=swap');
+
+* {
+  font-family: 'Fontspring Demo Universo', 'Universalis ADF Std', sans-serif;
+}
+
+.navbar {
+  background-color: transparent;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  max-width: 100%;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.navbar-logo img {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+}
+
+.navbar-menu {
+  display: flex;
+  list-style: none;
+  gap: 3rem;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.navbar-item {
+  margin: 0;
+}
+
+.navbar-link {
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.navbar-link:hover {
+  opacity: 0.8;
+}
+
+.map-color {
+  color: #164871;
+}
+
+.reports-color {
+  color: #164871;
+}
+
+.profile-color {
+  color: #164871;
+}
+
+.login-color {
+  color: #608A9A;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 1rem;
+  }
+
+  .navbar-menu {
+    gap: 1.5rem;
+  }
+
+  .navbar-logo img {
+    height: 40px;
+  }
+
+  .navbar-link {
+    font-size: 0.875rem;
+  }
+}
