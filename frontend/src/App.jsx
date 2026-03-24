@@ -9,6 +9,7 @@ import { HomePage } from './pages/dashboard/HomePage'
 import { AdminDashboard } from './pages/dashboard/AdminDashboard'
 import { AuthorityDashboard } from './pages/dashboard/AuthorityDashboard'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
+import { ReportCenter } from './pages/citizen/ReportCenter';
 
 function App() {
   const { isAuthenticated, initializing } = useAuth()
@@ -20,6 +21,8 @@ function App() {
   return (
     <>
       <Navbar />
+      {/* Add top padding so content doesn't hide behind fixed navbar */}
+      <div className="pt-24">
       <Routes>
       {/* Public Routes */}
       <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <LandingPage />} />
@@ -52,7 +55,16 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute allowedRoles={['citizen']}>
+            <ReportCenter />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
+    </div>
     </>
   )
 }

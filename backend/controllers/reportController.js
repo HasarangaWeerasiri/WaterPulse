@@ -5,7 +5,7 @@ import reportService from "../services/reportService.js";
 // Create Report (citizen only)
 export const createReport = async (req, res) => {
   try {
-    const { title, description, latitude, longitude, imageUrl } = req.body;
+    const { title, description, latitude, longitude, imageUrl, address: addressFromClient } = req.body;
 
     // Remove image from required check
     if (!title || !description || !latitude || !longitude) {
@@ -23,30 +23,33 @@ export const createReport = async (req, res) => {
       }
     }
 
-    // Reverse geocoding using OpenStreetMap
-    let address = null;
-    try {
-      const geoResponse = await axios.get(
-        "https://nominatim.openstreetmap.org/reverse",
-        {
-          params: {
-            lat: latitude,
-            lon: longitude,
-            format: "json"
-          },
-          headers: {
-            "User-Agent":
-              process.env.NOMINATIM_USER_AGENT ||
-              "WaterPulse/1.0 (contact@example.com)",
-            "Accept-Language": "en"
-          }
-        }
-      );
+    // Prefer client-provided address if present; otherwise reverse geocode using OpenStreetMap
+    let address = addressFromClient || null;
 
-      address = geoResponse.data.display_name;
-    } catch (geoError) {
-      console.error("Geocoding error:", geoError.message);
-      address = null; // Don't block report creation
+    if (!addressFromClient) {
+      try {
+        const geoResponse = await axios.get(
+          "https://nominatim.openstreetmap.org/reverse",
+          {
+            params: {
+              lat: latitude,
+              lon: longitude,
+              format: "json"
+            },
+            headers: {
+              "User-Agent":
+                process.env.NOMINATIM_USER_AGENT ||
+                "WaterPulse/1.0 (contact@example.com)",
+              "Accept-Language": "en"
+            }
+          }
+        );
+
+        address = geoResponse.data.display_name;
+      } catch (geoError) {
+        console.error("Geocoding error:", geoError.message);
+        address = null; // Don't block report creation
+      }
     }
 
     const report = new ContaminationReport({
