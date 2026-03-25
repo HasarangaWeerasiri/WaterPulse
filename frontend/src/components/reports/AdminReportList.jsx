@@ -14,7 +14,7 @@ import {
 import reportApi from '../../services/reportApi';
 import { StatusBadge } from './StatusBadge';
 
-const STATUS_OPTIONS = ['Unverified', 'In Progress', 'Confirmed'];
+const STATUS_OPTIONS = ['Unverified', 'In Progress', 'Confirmed', 'Resolved', 'Spam'];
 
 const STATUS_META = {
   Unverified: {
@@ -31,9 +31,21 @@ const STATUS_META = {
   },
   Confirmed: {
     icon: <CheckCircle2 size={15} />,
+    countColor: 'text-red-700',
+    bg: 'from-red-500 to-rose-600',
+    light: 'bg-red-50 border-red-200 text-red-700',
+  },
+  Resolved: {
+    icon: <CheckCircle2 size={15} />,
     countColor: 'text-emerald-700',
     bg: 'from-emerald-500 to-green-600',
     light: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+  },
+  Spam: {
+    icon: <AlertCircle size={15} />,
+    countColor: 'text-gray-700',
+    bg: 'from-gray-500 to-gray-700',
+    light: 'bg-gray-50 border-gray-200 text-gray-700',
   },
 };
 

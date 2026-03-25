@@ -3,7 +3,7 @@ import { ReportsMap } from './ReportsMap';
 import { useReportsForMap } from './useReportsForMap';
 
 const STATUS_COLORS = {
-  Confirmed: '#16a34a', // green
+  Confirmed: '#dc2626', // red (unsafe to use)
   Unverified: '#eab308', // yellow
   Resolved: '#22c55e',
   Spam: '#9ca3af',

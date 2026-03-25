@@ -8,6 +8,23 @@ export const waterLogApi = {
     const response = await axios.post(WATER_LOG_API_BASE_URL + '/', payload);
     return response.data;
   },
+
+  // Fetch all water logs (admin/authority can filter client-side)
+  async getAllLogs() {
+    const response = await axios.get(WATER_LOG_API_BASE_URL + '/');
+    return response.data;
+  },
+
+  // Fetch all water logs in a specific region
+  async getLogsByRegion(region) {
+    const response = await axios.get(`${WATER_LOG_API_BASE_URL}/region/${encodeURIComponent(region)}`);
+    return response.data;
+  },
+
+  async deleteLog(id) {
+    const response = await axios.delete(`${WATER_LOG_API_BASE_URL}/${id}`);
+    return response.data;
+  },
 };
 
 export default waterLogApi;

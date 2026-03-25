@@ -14,6 +14,10 @@ export const AuthorityDashboard = () => {
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState('');
 
+  const [authorityWaterLogs, setAuthorityWaterLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState('');
+
   const [selectedTaskId, setSelectedTaskId] = useState('');
 
   // Water log creation form (for the selected assigned report)
@@ -56,6 +60,84 @@ export const AuthorityDashboard = () => {
     if (!user) return;
     refreshMyTasks();
   }, [user]);
+
+  const refreshAuthorityWaterLogs = async () => {
+    if (!user) return;
+    setLogsLoading(true);
+    setLogsError('');
+    try {
+      const data = await waterLogApi.getAllLogs();
+      const logs = Array.isArray(data?.logs) ? data.logs : [];
+      const mine = logs.filter((l) => l?.recordedBy?._id === user._id);
+      setAuthorityWaterLogs(mine);
+    } catch (err) {
+      setLogsError(err?.response?.data?.message || 'Failed to load water logs');
+      setAuthorityWaterLogs([]);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    refreshAuthorityWaterLogs();
+  }, [user]);
+
+  const sortedLogsNewestFirst = (logs) => {
+    return [...(logs || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  };
+
+  // "Newest one who made the last change in report status":
+  // WaterLogService only auto-updates report status for safetyRating Safe/Unsafe.
+  const getLastStatusChangingLog = (logs) => {
+    const sorted = sortedLogsNewestFirst(logs);
+    return (
+      sorted.find((l) => l.safetyRating === 'Safe' || l.safetyRating === 'Unsafe') ||
+      sorted[0] ||
+      null
+    );
+  };
+
+  const getLogSummary = (log) => {
+    if (!log) return '';
+    if (log.safetyRating === 'Safe') {
+      return 'Water levels look safe; report status will sync to Resolved.';
+    }
+    if (log.safetyRating === 'Unsafe') {
+      return 'Water levels look unsafe; report status will sync to Confirmed.';
+    }
+    return 'Mixed results; report status is not auto-updated for Warning.';
+  };
+
+  const logsByReportId = useMemo(() => {
+    const map = {};
+    for (const log of authorityWaterLogs) {
+      const reportId = log?.reportId?._id;
+      if (!reportId) continue;
+      if (!map[reportId]) map[reportId] = [];
+      map[reportId].push(log);
+    }
+    // sort each group newest-first once
+    for (const reportId of Object.keys(map)) {
+      map[reportId] = sortedLogsNewestFirst(map[reportId]);
+    }
+    return map;
+  }, [authorityWaterLogs]);
+
+  const selectedReportLogs = useMemo(() => {
+    const rid = selectedTask?.reportId?._id;
+    if (!rid) return [];
+    return logsByReportId[rid] || [];
+  }, [logsByReportId, selectedTask]);
+
+  const selectedLastStatusChangeLog = useMemo(() => {
+    return getLastStatusChangingLog(selectedReportLogs);
+  }, [selectedReportLogs]);
+
+  const canUploadWaterLog = useMemo(() => {
+    const status = selectedTask?.reportId?.status;
+    return !['Resolved', 'Spam'].includes(status);
+  }, [selectedTask]);
 
   const handleLogout = () => {
     logout();
@@ -187,6 +269,12 @@ export const AuthorityDashboard = () => {
               </div>
             )}
 
+            {logsError && (
+              <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {logsError}
+              </div>
+            )}
+
             {tasksLoading ? (
               <div className="p-4 text-gray-600">Loading assigned reports...</div>
             ) : (
@@ -199,6 +287,8 @@ export const AuthorityDashboard = () => {
                   ) : (
                     myTasks.map((task) => {
                       const report = task.reportId;
+                      const groupLogs = logsByReportId?.[report?._id] || [];
+                      const lastChangingLog = getLastStatusChangingLog(groupLogs);
                       const isSelected = task._id === selectedTaskId;
                       return (
                         <div
@@ -214,6 +304,12 @@ export const AuthorityDashboard = () => {
                             <p className="text-sm text-gray-600 truncate">
                               Task: <span className="font-medium">{task.status}</span> • Report:{' '}
                               {report?.status || 'Unverified'}
+                            </p>
+
+                            <p className="text-xs text-gray-500 mt-1">
+                              {lastChangingLog
+                                ? `Last result: ${lastChangingLog.safetyRating} (pH ${lastChangingLog.phLevel}, turbidity ${lastChangingLog.turbidity} NTU)`
+                                : 'No previous water logs yet'}
                             </p>
                           </div>
 
@@ -255,7 +351,56 @@ export const AuthorityDashboard = () => {
                         <div className="text-xs text-gray-500 mt-2">
                           {selectedTask.reportId?.address || 'No address available'}
                         </div>
+                          {selectedLastStatusChangeLog && (
+                            <div className="text-xs text-gray-600 mt-2">
+                              Last status change from your log: {selectedLastStatusChangeLog.safetyRating} •{' '}
+                              {selectedLastStatusChangeLog.createdAt
+                                ? new Date(selectedLastStatusChangeLog.createdAt).toLocaleDateString()
+                                : '—'}
+                            </div>
+                          )}
                       </div>
+
+                        <div className="mb-4">
+                          <div className="text-sm text-gray-700 font-semibold mb-2">Previous Water Logs (by you)</div>
+                          {logsLoading ? (
+                            <div className="text-sm text-gray-600">Loading water logs...</div>
+                          ) : selectedReportLogs.length === 0 ? (
+                            <div className="text-sm text-gray-600">No previous water logs for this report yet.</div>
+                          ) : (
+                            <div className="space-y-3">
+                              {selectedReportLogs.map((log) => (
+                                <div key={log._id} className="p-3 rounded-lg border border-gray-200 bg-gray-50">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="min-w-0">
+                                      <div className="text-sm font-semibold text-gray-900 truncate">
+                                        {log.safetyRating} • pH {log.phLevel}, turbidity {log.turbidity} NTU
+                                      </div>
+                                      <div className="text-xs text-gray-600 mt-1">
+                                        Recorded: {log.createdAt ? new Date(log.createdAt).toLocaleString() : '—'}
+                                      </div>
+                                      <div className="text-xs text-gray-700 mt-2">
+                                        {getLogSummary(log)}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {Array.isArray(log.contaminants) && log.contaminants.length > 0 && (
+                                    <div className="text-xs text-gray-600 mt-2">
+                                      Contaminants: {log.contaminants.join(', ')}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {(!canUploadWaterLog) && (
+                          <div className="mb-4 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                            This report is already resolved. Further water logs are disabled for assigned task workflow.
+                          </div>
+                        )}
 
                       {logError && (
                         <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -273,6 +418,10 @@ export const AuthorityDashboard = () => {
                           e.preventDefault();
                           setLogError('');
                           setLogMessage('');
+
+                              if (!canUploadWaterLog) {
+                                return setLogError('This report is resolved. You cannot upload more water logs.');
+                              }
 
                           if (!selectedTask.reportId?._id) return setLogError('Missing reportId');
                           if (!region.trim()) return setLogError('Region is required');
@@ -302,6 +451,7 @@ export const AuthorityDashboard = () => {
                             setTurbidity('');
                             setContaminantsText('');
                             await refreshMyTasks();
+                            await refreshAuthorityWaterLogs();
                           } catch (err) {
                             setLogError(err?.response?.data?.message || 'Failed to create water log');
                           } finally {
@@ -365,7 +515,7 @@ export const AuthorityDashboard = () => {
 
                         <button
                           type="submit"
-                          disabled={creatingLog}
+                          disabled={creatingLog || !canUploadWaterLog}
                           className="w-full py-3 bg-[#164871] text-white font-semibold rounded-lg hover:bg-[#608A9A] transition disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
                         >
                           {creatingLog ? 'Submitting...' : 'Create Water Log'}
