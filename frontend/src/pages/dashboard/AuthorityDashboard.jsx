@@ -360,11 +360,15 @@ export const AuthorityDashboard = () => {
 
                 {/* Water log form */}
                 <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Create Water Log</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    {isResolvedTab ? 'Resolved Report Summary' : 'Create Water Log'}
+                  </h3>
 
                   {!selectedTask ? (
                     <div className="text-sm text-gray-600">
-                      Select an assigned report to create a water log.
+                      {isResolvedTab
+                        ? 'Select a resolved report to view its water log history.'
+                        : 'Select an assigned report to create a water log.'}
                     </div>
                   ) : (
                     <>
@@ -385,7 +389,9 @@ export const AuthorityDashboard = () => {
                       </div>
 
                         <div className="mb-4">
-                          <div className="text-sm text-gray-700 font-semibold mb-2">Previous Water Logs (by you)</div>
+                          <div className="text-sm text-gray-700 font-semibold mb-2">
+                            {isResolvedTab ? 'Water Log History (by you)' : 'Previous Water Logs (by you)'}
+                          </div>
                           {logsLoading ? (
                             <div className="text-sm text-gray-600">Loading water logs...</div>
                           ) : selectedReportLogs.length === 0 ? (
@@ -421,129 +427,135 @@ export const AuthorityDashboard = () => {
 
                         {(!canUploadWaterLog) && (
                           <div className="mb-4 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-                            This report is already resolved. Further water logs are disabled for assigned task workflow.
+                            {isResolvedTab
+                              ? 'This report is resolved. Further water logs are disabled.'
+                              : 'This report is already resolved. Further water logs are disabled for this workflow.'}
                           </div>
                         )}
 
-                      {logError && (
-                        <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                          {logError}
-                        </div>
-                      )}
-                      {logMessage && (
-                        <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
-                          {logMessage}
-                        </div>
-                      )}
+                      {!isResolvedTab && (
+                        <>
+                          {logError && (
+                            <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                              {logError}
+                            </div>
+                          )}
+                          {logMessage && (
+                            <div className="mb-4 p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+                              {logMessage}
+                            </div>
+                          )}
 
-                      <form
-                        onSubmit={async (e) => {
-                          e.preventDefault();
-                          setLogError('');
-                          setLogMessage('');
+                          <form
+                            onSubmit={async (e) => {
+                              e.preventDefault();
+                              setLogError('');
+                              setLogMessage('');
 
                               if (!canUploadWaterLog) {
                                 return setLogError('This report is resolved. You cannot upload more water logs.');
                               }
 
-                          if (!selectedTask.reportId?._id) return setLogError('Missing reportId');
-                          if (!region.trim()) return setLogError('Region is required');
-                          if (phLevel === '' || turbidity === '') return setLogError('pH Level and Turbidity are required');
+                              if (!selectedTask.reportId?._id) return setLogError('Missing reportId');
+                              if (!region.trim()) return setLogError('Region is required');
+                              if (phLevel === '' || turbidity === '') return setLogError('pH Level and Turbidity are required');
 
-                          const ph = Number(phLevel);
-                          const turb = Number(turbidity);
-                          if (Number.isNaN(ph) || Number.isNaN(turb)) return setLogError('pH Level and Turbidity must be numbers');
+                              const ph = Number(phLevel);
+                              const turb = Number(turbidity);
+                              if (Number.isNaN(ph) || Number.isNaN(turb)) return setLogError('pH Level and Turbidity must be numbers');
 
-                          const contaminants = contaminantsText
-                            .split(',')
-                            .map((s) => s.trim())
-                            .filter(Boolean);
+                              const contaminants = contaminantsText
+                                .split(',')
+                                .map((s) => s.trim())
+                                .filter(Boolean);
 
-                          setCreatingLog(true);
-                          try {
-                            await waterLogApi.createLog({
-                              region: region.trim(),
-                              reportId: selectedTask.reportId._id,
-                              phLevel: ph,
-                              turbidity: turb,
-                              contaminants,
-                            });
+                              setCreatingLog(true);
+                              try {
+                                await waterLogApi.createLog({
+                                  region: region.trim(),
+                                  reportId: selectedTask.reportId._id,
+                                  phLevel: ph,
+                                  turbidity: turb,
+                                  contaminants,
+                                });
 
-                            setLogMessage('Water log created. Report status may be updated automatically.');
-                            setPhLevel('');
-                            setTurbidity('');
-                            setContaminantsText('');
-                            await refreshMyTasks();
-                            await refreshAuthorityWaterLogs();
-                          } catch (err) {
-                            setLogError(err?.response?.data?.message || 'Failed to create water log');
-                          } finally {
-                            setCreatingLog(false);
-                          }
-                        }}
-                        className="space-y-4"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block mb-2 text-sm font-semibold text-gray-700">Region</label>
-                            <input
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              value={region}
-                              onChange={(e) => setRegion(e.target.value)}
-                              placeholder="e.g., Colombo District"
-                            />
-                          </div>
-                          <div>
-                            <label className="block mb-2 text-sm font-semibold text-gray-700">pH Level</label>
-                            <input
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="14"
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              value={phLevel}
-                              onChange={(e) => setPhLevel(e.target.value)}
-                              placeholder="0 - 14"
-                              required
-                            />
-                          </div>
-                        </div>
+                                setLogMessage('Water log created. Report status may be updated automatically.');
+                                setPhLevel('');
+                                setTurbidity('');
+                                setContaminantsText('');
+                                await refreshMyTasks();
+                                await refreshAuthorityWaterLogs();
+                              } catch (err) {
+                                setLogError(err?.response?.data?.message || 'Failed to create water log');
+                              } finally {
+                                setCreatingLog(false);
+                              }
+                            }}
+                            className="space-y-4"
+                          >
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block mb-2 text-sm font-semibold text-gray-700">Region</label>
+                                <input
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  value={region}
+                                  onChange={(e) => setRegion(e.target.value)}
+                                  placeholder="e.g., Colombo District"
+                                />
+                              </div>
+                              <div>
+                                <label className="block mb-2 text-sm font-semibold text-gray-700">pH Level</label>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  max="14"
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  value={phLevel}
+                                  onChange={(e) => setPhLevel(e.target.value)}
+                                  placeholder="0 - 14"
+                                  required
+                                />
+                              </div>
+                            </div>
 
-                        <div>
-                          <label className="block mb-2 text-sm font-semibold text-gray-700">Turbidity (NTU)</label>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={turbidity}
-                            onChange={(e) => setTurbidity(e.target.value)}
-                            placeholder="e.g., 3.2"
-                            required
-                          />
-                        </div>
+                            <div>
+                              <label className="block mb-2 text-sm font-semibold text-gray-700">Turbidity (NTU)</label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={turbidity}
+                                onChange={(e) => setTurbidity(e.target.value)}
+                                placeholder="e.g., 3.2"
+                                required
+                              />
+                            </div>
 
-                        <div>
-                          <label className="block mb-2 text-sm font-semibold text-gray-700">
-                            Contaminants (comma separated, optional)
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={contaminantsText}
-                            onChange={(e) => setContaminantsText(e.target.value)}
-                            placeholder="e.g., Lead, E. coli, Iron"
-                          />
-                        </div>
+                            <div>
+                              <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                Contaminants (comma separated, optional)
+                              </label>
+                              <input
+                                type="text"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={contaminantsText}
+                                onChange={(e) => setContaminantsText(e.target.value)}
+                                placeholder="e.g., Lead, E. coli, Iron"
+                              />
+                            </div>
 
-                        <button
-                          type="submit"
-                          disabled={creatingLog || !canUploadWaterLog}
-                          className="w-full py-3 bg-[#164871] text-white font-semibold rounded-lg hover:bg-[#608A9A] transition disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
-                        >
-                          {creatingLog ? 'Submitting...' : 'Create Water Log'}
-                        </button>
-                      </form>
+                            <button
+                              type="submit"
+                              disabled={creatingLog || !canUploadWaterLog}
+                              className="w-full py-3 bg-[#164871] text-white font-semibold rounded-lg hover:bg-[#608A9A] transition disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+                            >
+                              {creatingLog ? 'Submitting...' : 'Create Water Log'}
+                            </button>
+                          </form>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
