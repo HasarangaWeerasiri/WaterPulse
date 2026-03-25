@@ -1,6 +1,15 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export function Navbar() {
+  const navigate = useNavigate()
+  const { isAuthenticated, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/', { replace: true })
+  }
+
   return (
     <nav className="fixed top-0 left-0 z-50 w-full bg-transparent">
       <div className="flex items-center justify-center max-w-full gap-16 px-8 py-6">
@@ -34,9 +43,19 @@ export function Navbar() {
             </a>
           </li>
           <li className="m-0">
-            <Link to="/login" className="no-underline text-sm font-semibold tracking-wider transition-opacity duration-300 hover:opacity-80 cursor-pointer text-[#608A9A]">
-              LOGIN
-            </Link>
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="no-underline text-sm font-semibold tracking-wider transition-opacity duration-300 hover:opacity-80 cursor-pointer text-[#dc2626]"
+              >
+                LOGOUT
+              </button>
+            ) : (
+              <Link to="/login" className="no-underline text-sm font-semibold tracking-wider transition-opacity duration-300 hover:opacity-80 cursor-pointer text-[#608A9A]">
+                LOGIN
+              </Link>
+            )}
           </li>
         </ul>
       </div>
