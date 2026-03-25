@@ -139,6 +139,17 @@ export const AuthorityDashboard = () => {
     return !['Resolved', 'Spam'].includes(status);
   }, [selectedTask]);
 
+  const resolvedTasks = useMemo(() => {
+    return myTasks.filter((t) => t.reportId?.status === 'Resolved');
+  }, [myTasks]);
+
+  const manageTasks = useMemo(() => {
+    return myTasks.filter((t) => t.reportId?.status !== 'Resolved');
+  }, [myTasks]);
+
+  const isResolvedTab = activeTab === 'resolved';
+  const tasksForTab = isResolvedTab ? resolvedTasks : manageTasks;
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -193,6 +204,16 @@ export const AuthorityDashboard = () => {
           >
             Manage Issues
           </button>
+          <button
+            onClick={() => setActiveTab('resolved')}
+            className={`px-6 py-2 rounded-lg font-semibold transition ${
+              activeTab === 'resolved'
+                ? 'bg-green-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Resolved
+          </button>
         </div>
 
         {/* Overview Tab */}
@@ -212,7 +233,7 @@ export const AuthorityDashboard = () => {
                 <div className="bg-blue-50 p-6 rounded-lg">
                   <h3 className="text-xl font-bold text-blue-600 mb-2">🚨 Pending Issues</h3>
                   <p className="text-gray-600">
-                    {myTasks.filter((t) => !['completed', 'cancelled'].includes(t.status)).length} reports awaiting action
+                    {myTasks.filter((t) => t.reportId?.status !== 'Resolved').length} reports awaiting action
                   </p>
                 </div>
                 <div className="bg-purple-50 p-6 rounded-lg">
@@ -258,10 +279,12 @@ export const AuthorityDashboard = () => {
           </div>
         )}
 
-        {/* Manage Issues Tab */}
-        {activeTab === 'manage' && (
+        {/* Manage Issues / Resolved Tab */}
+        {(activeTab === 'manage' || activeTab === 'resolved') && (
           <div className="bg-white rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Manage Water Issues</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              {isResolvedTab ? 'Resolved Reports' : 'Manage Water Issues'}
+            </h2>
 
             {tasksError && (
               <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -280,12 +303,12 @@ export const AuthorityDashboard = () => {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  {myTasks.length === 0 ? (
+                  {tasksForTab.length === 0 ? (
                     <div className="p-6 rounded-lg bg-gray-50 text-gray-600 text-sm">
-                      No assigned tasks yet.
+                      {isResolvedTab ? 'No resolved reports yet.' : 'No assigned tasks yet.'}
                     </div>
                   ) : (
-                    myTasks.map((task) => {
+                    tasksForTab.map((task) => {
                       const report = task.reportId;
                       const groupLogs = logsByReportId?.[report?._id] || [];
                       const lastChangingLog = getLastStatusChangingLog(groupLogs);
@@ -327,7 +350,7 @@ export const AuthorityDashboard = () => {
                               isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                             }`}
                           >
-                            {isSelected ? 'Selected' : 'Log Water Sample'}
+                            {isSelected ? 'Selected' : isResolvedTab ? 'View Summary' : 'Log Water Sample'}
                           </button>
                         </div>
                       );
