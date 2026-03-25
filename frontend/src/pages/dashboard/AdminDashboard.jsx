@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AdminReportList from '../../components/reports/AdminReportList';
 import AdminReportsMap from '../../components/reports/AdminReportsMap';
+import reportApi from '../../services/reportApi';
+import taskApi from '../../services/taskApi';
 
 export const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -22,6 +24,22 @@ export const AdminDashboard = () => {
   });
 
   const [message, setMessage] = useState('');
+
+  // Task assignment (admin -> authority)
+  const [pendingReports, setPendingReports] = useState([]);
+  const [authorities, setAuthorities] = useState([]);
+  const [loadingTaskForm, setLoadingTaskForm] = useState(false);
+
+  const [selectedReportId, setSelectedReportId] = useState('');
+  const [assignedTo, setAssignedTo] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
+
+  const [taskSubmitError, setTaskSubmitError] = useState('');
+  const [taskSubmitSuccess, setTaskSubmitSuccess] = useState('');
+  const [submittingTask, setSubmittingTask] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -51,6 +69,79 @@ export const AdminDashboard = () => {
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(`✗ Error: ${error.response?.data?.message || 'Failed to create'}`);
+    }
+  };
+
+  const refreshPendingReportsAndAuthorities = async () => {
+    setLoadingTaskForm(true);
+    setTaskSubmitError('');
+    setTaskSubmitSuccess('');
+    try {
+      const [pending, auths] = await Promise.all([
+        reportApi.getPendingReports(),
+        taskApi.getAuthorities(),
+      ]);
+
+      setPendingReports(Array.isArray(pending) ? pending : []);
+      setAuthorities(Array.isArray(auths?.authorities) ? auths.authorities : []);
+      const firstAuthorityId = Array.isArray(auths?.authorities) && auths.authorities.length
+        ? auths.authorities[0]._id
+        : '';
+      setAssignedTo(firstAuthorityId);
+    } catch (err) {
+      setTaskSubmitError(err?.response?.data?.message || 'Failed to load task assignment data');
+      setPendingReports([]);
+      setAuthorities([]);
+      setAssignedTo('');
+    } finally {
+      setLoadingTaskForm(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshPendingReportsAndAuthorities();
+  }, []);
+
+  const handleSelectReport = (reportId) => {
+    setSelectedReportId(reportId);
+    const report = pendingReports.find((r) => r._id === reportId);
+    setPriority('medium');
+    setTaskTitle(report ? `Investigate: ${report.title}` : '');
+    setTaskDescription('');
+    setDueDate('');
+  };
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    setTaskSubmitError('');
+    setTaskSubmitSuccess('');
+
+    if (!selectedReportId) return setTaskSubmitError('Please select a report');
+    if (!assignedTo) return setTaskSubmitError('Please select an authority');
+    if (!taskTitle.trim()) return setTaskSubmitError('Task title is required');
+
+    setSubmittingTask(true);
+    try {
+      await taskApi.createTask({
+        reportId: selectedReportId,
+        assignedTo,
+        priority,
+        title: taskTitle.trim(),
+        description: taskDescription.trim() || undefined,
+        dueDate: dueDate || undefined,
+      });
+
+      setTaskSubmitSuccess('Task created successfully. The report is now marked as In Progress.');
+      setSelectedReportId('');
+      setTaskTitle('');
+      setTaskDescription('');
+      setDueDate('');
+
+      await refreshPendingReportsAndAuthorities();
+    } catch (err) {
+      setTaskSubmitError(err?.response?.data?.message || 'Failed to create task');
+    } finally {
+      setSubmittingTask(false);
     }
   };
 
@@ -151,7 +242,108 @@ export const AdminDashboard = () => {
         {activeTab === 'reports' && <AdminReportList />}
 
         {activeTab === 'tasks' && (
-          <div className="p-6 bg-white shadow rounded-xl">Tasks Section</div>
+          <div className="p-6 bg-white shadow rounded-xl">
+            <h3 className="text-2xl font-bold text-[#00569c] mb-4">Create Task (Admin)</h3>
+
+            {loadingTaskForm ? (
+              <div className="p-4 text-gray-600">Loading pending reports and authorities...</div>
+            ) : (
+              <form onSubmit={handleCreateTask} className="space-y-4">
+                {taskSubmitError && (
+                  <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+                    <p className="text-red-700">{taskSubmitError}</p>
+                  </div>
+                )}
+                {taskSubmitSuccess && (
+                  <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                    <p className="text-green-700">{taskSubmitSuccess}</p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Report</label>
+                  <select
+                    className="input"
+                    value={selectedReportId}
+                    onChange={(e) => handleSelectReport(e.target.value)}
+                  >
+                    <option value="">Select a pending report</option>
+                    {pendingReports.map((r) => (
+                      <option key={r._id} value={r._id}>
+                        {r.title} {r.address ? `(${r.address})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">Assign To</label>
+                    <select className="input" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
+                      <option value="">Select authority</option>
+                      {authorities.map((a) => (
+                        <option key={a._id} value={a._id}>
+                          {a.firstName} {a.lastName} ({a.location?.district || 'Unknown district'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">Priority</label>
+                    <select className="input" value={priority} onChange={(e) => setPriority(e.target.value)}>
+                      <option value="low">low</option>
+                      <option value="medium">medium</option>
+                      <option value="high">high</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Task Title</label>
+                  <input
+                    className="input"
+                    value={taskTitle}
+                    onChange={(e) => setTaskTitle(e.target.value)}
+                    placeholder="e.g., Investigate contamination report"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-semibold text-gray-700">Description (optional)</label>
+                  <textarea
+                    className="input"
+                    style={{ height: 110 }}
+                    value={taskDescription}
+                    onChange={(e) => setTaskDescription(e.target.value)}
+                    placeholder="Add any notes for the authority team..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-2 text-sm font-semibold text-gray-700">Due Date (optional)</label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="submit"
+                      disabled={submittingTask}
+                      className="w-full py-3 bg-[#00569c] text-white rounded-lg hover:bg-[#003f73] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {submittingTask ? 'Creating...' : 'Create Task'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
         )}
 
         {activeTab === 'map' && (
