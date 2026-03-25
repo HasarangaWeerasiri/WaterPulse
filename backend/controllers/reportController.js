@@ -1,6 +1,7 @@
 import ContaminationReport from "../models/contaminationReport.js";
 import axios from "axios";
 import reportService from "../services/reportService.js";
+import reportPdfService from "../services/reportPdfService.js";
 
 // Create Report (citizen only)
 export const createReport = async (req, res) => {
@@ -130,6 +131,18 @@ export const getMyReports = async (req, res) => {
 
     res.status(200).json(reports);
 
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get all confirmed reports (any authenticated role)
+export const getConfirmedReports = async (req, res) => {
+  try {
+    const reports = await ContaminationReport.find({ status: "Confirmed" })
+      .populate("reportedBy", "firstName email role");
+
+    res.status(200).json(reports);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -305,6 +318,75 @@ export const deleteReport = async (req, res) => {
     res.status(200).json({ message: "Report deleted successfully" });
 
   } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Generate PDF for a single report
+export const downloadReportPdf = async (req, res) => {
+  try {
+    let report;
+
+    if (req.userRole === "admin" || req.userRole === "authority") {
+      report = await ContaminationReport.findById(req.params.id).populate(
+        "reportedBy",
+        "firstName email role"
+      );
+    } else {
+      report = await ContaminationReport.findOne({
+        _id: req.params.id,
+        reportedBy: req.userId,
+      }).populate("reportedBy", "firstName email role");
+    }
+
+    if (!report) {
+      return res
+        .status(404)
+        .json({ message: "Report not found or not authorized" });
+    }
+
+    const pdfBuffer = await reportPdfService.buildSingleReportPdf(report);
+    const filename = `report-${report._id}.pdf`;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${filename}"`
+    );
+    res.setHeader("Content-Length", pdfBuffer.length);
+    return res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Download report PDF error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Generate PDF containing all reports (admin/authority only)
+export const downloadAllReportsPdf = async (req, res) => {
+  try {
+    if (req.userRole !== "admin" && req.userRole !== "authority") {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to export all reports" });
+    }
+
+    const reports = await ContaminationReport.find().populate(
+      "reportedBy",
+      "firstName email role"
+    );
+
+    const pdfBuffer = await reportPdfService.buildAllReportsPdf(reports);
+    const filename = "all-reports.pdf";
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${filename}"`
+    );
+    res.setHeader("Content-Length", pdfBuffer.length);
+    return res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Download all reports PDF error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

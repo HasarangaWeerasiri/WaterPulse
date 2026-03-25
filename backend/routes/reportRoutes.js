@@ -7,7 +7,10 @@ import {
   updateReport,
   updateReportStatus,
   deleteReport,
-  getMyReports
+  downloadReportPdf,
+  downloadAllReportsPdf,
+  getMyReports,
+  getConfirmedReports,
 } from "../controllers/reportController.js";
 
 import { verifyToken, checkRole } from "../middleware/authMiddleware.js";
@@ -30,6 +33,14 @@ router.get(
   getAllReports
 );
 
+// Download all reports as a single PDF (admin & authority)
+router.get(
+  "/all/pdf",
+  verifyToken,
+  checkRole(["admin", "authority"]),
+  downloadAllReportsPdf
+);
+
 // Get my reports (citizen)
 router.get(
   "/my-reports",
@@ -38,12 +49,26 @@ router.get(
   getMyReports
 );
 
+// Get all confirmed reports (any authenticated user)
+router.get(
+  "/confirmed",
+  verifyToken,
+  getConfirmedReports
+);
+
 
 // Get a single report by ID (any authenticated user, but citizens only see their own)
 router.get(
   "/:id",
   verifyToken,
   getReportById
+);
+
+// Download a single report as PDF
+router.get(
+  "/:id/pdf",
+  verifyToken,
+  downloadReportPdf
 );
 
 

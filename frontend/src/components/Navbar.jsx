@@ -7,9 +7,12 @@ export function Navbar() {
         {/* Left Navigation Items */}
         <ul className="flex items-center gap-12 p-0 m-0 list-none">
           <li className="m-0">
-            <a href="#map" className="no-underline text-sm font-semibold tracking-wider transition-opacity duration-300 hover:opacity-80 cursor-pointer text-[#164871]">
+            <Link
+              to="/map"
+              className="no-underline text-sm font-semibold tracking-wider transition-opacity duration-300 hover:opacity-80 cursor-pointer text-[#164871]"
+            >
               MAP
-            </a>
+            </Link>
           </li>
           <li className="m-0">
             <Link to="/reports" className="no-underline text-sm font-semibold tracking-wider transition-opacity duration-300 hover:opacity-80 cursor-pointer text-[#164871]">
