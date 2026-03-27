@@ -72,8 +72,11 @@ class TaskService {
 
       await task.save();
 
-      // Mark report as Confirmed so it no longer appears in Pending Reports
-      await ContaminationReport.findByIdAndUpdate(reportId, { status: 'Confirmed' });
+      // When a task team is assigned, move report into "In Progress" so the
+      // citizen gets immediate feedback (but don't override already-final states).
+      if (report.status === 'Unverified') {
+        await ContaminationReport.findByIdAndUpdate(reportId, { status: 'In Progress' });
+      }
 
       // Populate related fields (reportedBy nested for citizen notification)
       await task.populate([
@@ -200,22 +203,36 @@ class TaskService {
       throw new Error('Forbidden: You can only update tasks assigned to you');
     }
 
-    // Cancellation requires a reason
+    // Cancellation handling based on role
     if (status === 'cancelled') {
-      if (!cancellationReason || cancellationReason.trim() === '') {
-        throw new Error('A cancellation reason is required when cancelling a task');
+      // Authority users MUST provide a cancellation reason
+      if (requestingUserRole === 'authority') {
+        if (!cancellationReason || cancellationReason.trim() === '') {
+          throw new Error('A cancellation reason is required when cancelling a task');
+        }
+        task.cancellationReason = cancellationReason.trim();
       }
-      task.cancellationReason = cancellationReason.trim();
+      // Admin users can cancel without providing a reason
+      else if (requestingUserRole === 'admin' && cancellationReason) {
+        task.cancellationReason = cancellationReason.trim();
+      }
+
+      // Track which role cancelled the task
+      task.cancelledByRole = requestingUserRole;
 
       // Restore the linked report back to Unverified (Pending Reports)
-      await ContaminationReport.findByIdAndUpdate(task.reportId, { status: 'Unverified' });
+      // only if it's currently "In Progress" (avoid reverting resolved/confirmed reports).
+      await ContaminationReport.findOneAndUpdate(
+        { _id: task.reportId, status: 'In Progress' },
+        { status: 'Unverified' }
+      );
     }
 
-    // Auto-update report to Confirmed when task moves to In-Progress
+    // Keep the report in "In Progress" when the task enters in_progress.
     if (status === 'in_progress') {
       await ContaminationReport.findOneAndUpdate(
         { _id: task.reportId, status: 'Unverified' },
-        { status: 'Confirmed' }
+        { status: 'In Progress' }
       );
     }
 

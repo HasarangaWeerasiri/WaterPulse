@@ -18,7 +18,7 @@ const contaminationReportSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["Unverified", "Confirmed", "Resolved", "Spam"],
+    enum: ["Unverified", "In Progress", "Confirmed", "Resolved", "Spam"],
     default: "Unverified"
   },
   location: {

@@ -11,6 +11,7 @@ import {
   downloadAllReportsPdf,
   getMyReports,
   getConfirmedReports,
+  getPendingReports,
 } from "../controllers/reportController.js";
 
 import { verifyToken, checkRole } from "../middleware/authMiddleware.js";
@@ -54,6 +55,14 @@ router.get(
   "/confirmed",
   verifyToken,
   getConfirmedReports
+);
+
+// Get all pending reports (admin & authority)
+router.get(
+  "/pending",
+  verifyToken,
+  checkRole(["admin", "authority"]),
+  getPendingReports
 );
 
 

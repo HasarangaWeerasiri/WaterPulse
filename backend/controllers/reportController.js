@@ -148,6 +148,16 @@ export const getConfirmedReports = async (req, res) => {
   }
 };
 
+// Get all pending reports (status: "Unverified")
+export const getPendingReports = async (req, res) => {
+  try {
+    const pendingReports = await reportService.getPendingReports();
+    res.status(200).json(pendingReports);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 // Get reports within radius (for map)
 export const getReportsByRadius = async (req, res) => {
   try {

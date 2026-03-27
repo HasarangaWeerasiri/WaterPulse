@@ -4,14 +4,14 @@ import { useReportsForMap } from './useReportsForMap';
 import reportApi from '../../services/reportApi';
 
 const STATUS_COLORS = {
-  Confirmed: '#16a34a',
+  Confirmed: '#dc2626',
 };
 
 export function CitizenReportsMap({ heightClass }) {
   // Use dedicated confirmed-only endpoint so citizens don't depend on admin /all.
   const { reports, loading, error } = useReportsForMap({ loader: reportApi.getConfirmedReports });
 
-  const colorForStatus = (status) => STATUS_COLORS[status] || '#16a34a';
+  const colorForStatus = (status) => STATUS_COLORS[status] || '#dc2626';
 
   return (
     <ReportsMap
