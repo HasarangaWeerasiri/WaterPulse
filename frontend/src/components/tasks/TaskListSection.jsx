@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import taskApi from '../../services/taskApi';
-import TaskStatusBadge from './TaskStatusBadge';
-import TaskPriorityBadge from './TaskPriorityBadge';
-import TaskFormModal from './TaskFormModal';
-import TaskDetailModal from './TaskDetailModal';
+import React, { useState, useEffect, useMemo } from "react";
+import taskApi from "../../services/taskApi";
+import TaskStatusBadge from "./TaskStatusBadge";
+import TaskPriorityBadge from "./TaskPriorityBadge";
+import TaskFormModal from "./TaskFormModal";
+import TaskDetailModal from "./TaskDetailModal";
 
 export const TaskListSection = () => {
   const [tasks, setTasks] = useState([]);
   const [authorities, setAuthorities] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
-  const [priorityFilter, setPriorityFilter] = useState('All Priorities');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
+  const [priorityFilter, setPriorityFilter] = useState("All Priorities");
 
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,12 +37,12 @@ export const TaskListSection = () => {
 
   const loadTasks = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const data = await taskApi.getTasks();
       setTasks(Array.isArray(data?.tasks) ? data.tasks : []);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load tasks');
+      setError(err?.response?.data?.message || "Failed to load tasks");
       setTasks([]);
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ export const TaskListSection = () => {
       const data = await taskApi.getAuthorities();
       setAuthorities(Array.isArray(data?.authorities) ? data.authorities : []);
     } catch (err) {
-      console.error('Failed to load authorities:', err);
+      console.error("Failed to load authorities:", err);
       setAuthorities([]);
     }
   };
@@ -73,12 +73,12 @@ export const TaskListSection = () => {
       }
 
       // Status filter - convert display names to backend format
-      if (statusFilter !== 'All Statuses') {
+      if (statusFilter !== "All Statuses") {
         const statusMap = {
-          'Pending': 'pending',
-          'In Progress': 'in_progress',
-          'Completed': 'completed',
-          'Cancelled': 'cancelled',
+          Pending: "pending",
+          "In Progress": "in_progress",
+          Completed: "completed",
+          Cancelled: "cancelled",
         };
         const backendStatus = statusMap[statusFilter];
         if (task.status !== backendStatus) {
@@ -87,7 +87,7 @@ export const TaskListSection = () => {
       }
 
       // Priority filter - backend uses lowercase
-      if (priorityFilter !== 'All Priorities') {
+      if (priorityFilter !== "All Priorities") {
         if (task.priority !== priorityFilter.toLowerCase()) {
           return false;
         }
@@ -119,18 +119,18 @@ export const TaskListSection = () => {
   const handleStatusChange = async (taskId, newStatusDisplay) => {
     // Convert display status to backend format
     const statusMap = {
-      'Pending': 'pending',
-      'In Progress': 'in_progress',
-      'Completed': 'completed',
-      'Cancelled': 'cancelled',
+      Pending: "pending",
+      "In Progress": "in_progress",
+      Completed: "completed",
+      Cancelled: "cancelled",
     };
     const newStatus = statusMap[newStatusDisplay];
-    
+
     try {
       await taskApi.updateTaskStatus(taskId, newStatus);
       await loadTasks();
     } catch (err) {
-      alert(err?.response?.data?.message || 'Failed to update task status');
+      alert(err?.response?.data?.message || "Failed to update task status");
     }
   };
 
@@ -140,16 +140,16 @@ export const TaskListSection = () => {
       await loadTasks();
       setDeleteConfirm(null);
     } catch (err) {
-      alert(err?.response?.data?.message || 'Failed to delete task');
+      alert(err?.response?.data?.message || "Failed to delete task");
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -218,9 +218,9 @@ export const TaskListSection = () => {
           <div className="flex items-end">
             <button
               onClick={() => {
-                setSearchTerm('');
-                setStatusFilter('All Statuses');
-                setPriorityFilter('All Priorities');
+                setSearchTerm("");
+                setStatusFilter("All Statuses");
+                setPriorityFilter("All Priorities");
               }}
               className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition text-sm font-semibold"
             >
@@ -255,7 +255,12 @@ export const TaskListSection = () => {
       {/* No Tasks State */}
       {!loading && filteredTasks.length === 0 && (
         <div className="p-8 text-center text-gray-500">
-          <p>No tasks found. {tasks.length === 0 ? 'Create one to get started!' : 'Try adjusting your filters.'}</p>
+          <p>
+            No tasks found.{" "}
+            {tasks.length === 0
+              ? "Create one to get started!"
+              : "Try adjusting your filters."}
+          </p>
         </div>
       )}
 
@@ -274,14 +279,12 @@ export const TaskListSection = () => {
                 </h4>
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>
-                    Created {formatDate(task.createdAt)} • Assigned to{' '}
+                    Created {formatDate(task.createdAt)} • Assigned to{" "}
                     <span className="font-semibold">
                       {task.assignedTo?.firstName} {task.assignedTo?.lastName}
                     </span>
                   </p>
-                  {task.dueDate && (
-                    <p>Due: {formatDate(task.dueDate)}</p>
-                  )}
+                  {task.dueDate && <p>Due: {formatDate(task.dueDate)}</p>}
                 </div>
               </div>
 
@@ -312,36 +315,44 @@ export const TaskListSection = () => {
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => setOpenStatusDropdown(openStatusDropdown === task._id ? null : task._id)}
+                    onClick={() =>
+                      setOpenStatusDropdown(
+                        openStatusDropdown === task._id ? null : task._id,
+                      )
+                    }
                     className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition text-sm font-semibold"
                   >
                     Update Status
                   </button>
                   {openStatusDropdown === task._id && (
                     <div className="absolute left-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-20 min-w-max">
-                      {['Pending', 'In Progress', 'Completed', 'Cancelled'].map((status) => {
-                        const statusMap = {
-                          'Pending': 'pending',
-                          'In Progress': 'in_progress',
-                          'Completed': 'completed',
-                          'Cancelled': 'cancelled',
-                        };
-                        return (
-                          <button
-                            key={status}
-                            type="button"
-                            onClick={() => {
-                              handleStatusChange(task._id, status);
-                              setOpenStatusDropdown(null);
-                            }}
-                            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition ${
-                              task.status === statusMap[status] ? 'bg-gray-200 font-semibold' : ''
-                            }`}
-                          >
-                            {status}
-                          </button>
-                        );
-                      })}
+                      {["Pending", "In Progress", "Completed", "Cancelled"].map(
+                        (status) => {
+                          const statusMap = {
+                            Pending: "pending",
+                            "In Progress": "in_progress",
+                            Completed: "completed",
+                            Cancelled: "cancelled",
+                          };
+                          return (
+                            <button
+                              key={status}
+                              type="button"
+                              onClick={() => {
+                                handleStatusChange(task._id, status);
+                                setOpenStatusDropdown(null);
+                              }}
+                              className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition ${
+                                task.status === statusMap[status]
+                                  ? "bg-gray-200 font-semibold"
+                                  : ""
+                              }`}
+                            >
+                              {status}
+                            </button>
+                          );
+                        },
+                      )}
                     </div>
                   )}
                 </div>
@@ -363,9 +374,12 @@ export const TaskListSection = () => {
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Delete Task?</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">
+              Delete Task?
+            </h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this task? This action cannot be undone.
+              Are you sure you want to delete this task? This action cannot be
+              undone.
             </p>
             <div className="flex gap-3">
               <button

@@ -9,6 +9,7 @@ export const TaskFormModal = ({
   editingTask,
   authorities,
 }) => {
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     reportId: "",
     assignedTo: "",
@@ -26,6 +27,7 @@ export const TaskFormModal = ({
   useEffect(() => {
     if (isOpen) {
       loadPendingReports();
+      setStep(1);
       if (editingTask) {
         setFormData({
           reportId: editingTask.reportId?._id || "",
@@ -61,6 +63,34 @@ export const TaskFormModal = ({
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setError("");
+  };
+
+  const validateStep = () => {
+    if (step === 1 && !editingTask) {
+      if (!formData.reportId) {
+        setError("Please select a report to continue");
+        return false;
+      }
+    } else if (step === 2) {
+      if (!formData.title.trim()) {
+        setError("Task title is required");
+        return false;
+      }
+    } else if (step === 3) {
+      if (!formData.assignedTo) {
+        setError("Please select an authority to assign");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep()) {
+      setError("");
+      setStep(step + 1);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -104,249 +134,358 @@ export const TaskFormModal = ({
       setTimeout(() => {
         onSuccess();
         onClose();
-      }, 1000);
+      }, 1500);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to save task");
-    } finally {
       setLoading(false);
     }
   };
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-50 to-gray-100 z-50 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#00569c] to-[#003f73] text-white px-8 py-8 shadow-lg">
-        <div className="flex justify-between items-center max-w-7xl mx-auto w-full">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-8 bg-white rounded-full opacity-80"></div>
-              <h2 className="text-4xl font-bold">
-                {editingTask ? "Edit Task" : "Create New Task"}
-              </h2>
-            </div>
-            <p className="text-blue-100 text-sm">
-              {editingTask
-                ? "Update task details and assignment"
-                : "Create a new task and assign to an authority"}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-white hover:bg-white/20 p-3 rounded-full transition-all duration-200 hover:scale-110"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
+  const totalSteps = editingTask ? 3 : 4;
+  const stepTitles = editingTask 
+    ? ["Task Details", "Assignment", "Final Review"]
+    : ["Select Report", "Task Details", "Assignment", "Final Review"];
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-8 py-8">
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-3">
-              <span className="text-2xl">❌</span>
-              <p className="text-red-700 font-medium">{error}</p>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {success && (
-            <div className="mb-6 p-4 rounded-2xl bg-green-50 border border-green-200 flex items-start gap-3">
-              <span className="text-2xl">✅</span>
-              <p className="text-green-700 font-medium">{success}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Report Section */}
-            {!editingTask && (
-              <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center text-white text-lg">
-                    🔗
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-800">
-                    Select Report
-                  </h3>
-                </div>
-                <select
-                  name="reportId"
-                  value={formData.reportId}
-                  onChange={handleInputChange}
-                  className="w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00569c] focus:ring-2 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
-                  required
-                >
-                  <option value="">Select a pending report</option>
-                  {pendingReports.map((report) => (
-                    <option key={report._id} value={report._id}>
-                      {report.title}{" "}
-                      {report.address ? `(${report.address})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Basic Info Section */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-[#00569c] rounded-lg flex items-center justify-center text-white text-lg">
-                  📋
-                </div>
-                <h3 className="text-xl font-bold text-gray-800">
-                  Task Details
-                </h3>
-              </div>
-
-              {/* Title */}
-              <div className="mb-6">
-                <label className="block mb-3 text-sm font-bold text-gray-700 uppercase tracking-wide">
-                  Task Title
+  const renderStepContent = () => {
+    switch (step) {
+      case 1:
+        if (editingTask) {
+          return (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  📋 Task Title
                 </label>
                 <input
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00569c] focus:ring-2 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
-                  placeholder="e.g., Investigate contamination report"
-                  required
+                  placeholder="Enter a clear, concise task title"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
                 />
               </div>
-
-              {/* Description */}
               <div>
-                <label className="block mb-3 text-sm font-bold text-gray-700 uppercase tracking-wide">
-                  Description (Optional)
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  📝 Description
                 </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  className="w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00569c] focus:ring-2 focus:ring-[#00569c]/20 transition text-gray-700 font-medium resize-none"
-                  placeholder="Add any notes for the assigned authority..."
+                  placeholder="Add detailed instructions or notes..."
                   rows={5}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium resize-none"
                 />
               </div>
             </div>
+          );
+        } else {
+          return (
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                🔗 Select Report
+              </label>
+              <select
+                name="reportId"
+                value={formData.reportId}
+                onChange={handleInputChange}
+                className="w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
+              >
+                <option value="">Choose a pending report to address...</option>
+                {pendingReports.map((report) => (
+                  <option key={report._id} value={report._id}>
+                    {report.title} {report.address ? `— ${report.address}` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-2">Select the contamination report that this task addresses.</p>
+            </div>
+          );
+        }
 
-            {/* Assignment Section */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center text-white text-lg">
-                  👤
-                </div>
-                <h3 className="text-xl font-bold text-gray-800">Assignment</h3>
+      case 2:
+        if (editingTask) {
+          return (
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  👤 Assign To
+                </label>
+                <select
+                  name="assignedTo"
+                  value={formData.assignedTo}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
+                >
+                  <option value="">Select authority...</option>
+                  {authorities?.map((auth) => (
+                    <option key={auth._id} value={auth._id}>
+                      {auth.firstName} {auth.lastName}
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                {/* Assign To */}
-                <div>
-                  <label className="block mb-3 text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Assign To
-                  </label>
-                  <select
-                    name="assignedTo"
-                    value={formData.assignedTo}
-                    onChange={handleInputChange}
-                    className="w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00569c] focus:ring-2 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
-                    required
-                  >
-                    <option value="">Select authority</option>
-                    {authorities?.map((auth) => (
-                      <option key={auth._id} value={auth._id}>
-                        {auth.firstName} {auth.lastName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Priority */}
-                <div>
-                  <label className="block mb-3 text-sm font-bold text-gray-700 uppercase tracking-wide">
-                    Priority
-                  </label>
-                  <select
-                    name="priority"
-                    value={formData.priority}
-                    onChange={handleInputChange}
-                    className="w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00569c] focus:ring-2 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
-                  >
-                    <option value="low">🟢 Low</option>
-                    <option value="medium">🟡 Medium</option>
-                    <option value="high">🔴 High</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  ⚡ Priority
+                </label>
+                <select
+                  name="priority"
+                  value={formData.priority}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
+                >
+                  <option value="low">🟢 Low Priority</option>
+                  <option value="medium">🟡 Medium Priority</option>
+                  <option value="high">🔴 High Priority</option>
+                </select>
               </div>
             </div>
-
-            {/* Due Date Section */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center text-white text-lg">
-                  📅
-                </div>
-                <h3 className="text-xl font-bold text-gray-800">Due Date</h3>
+          );
+        } else {
+          return (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  📋 Task Title
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="Enter a clear, concise task title"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
+                />
               </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  📝 Description (Optional)
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Add detailed instructions or notes..."
+                  rows={4}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium resize-none"
+                />
+              </div>
+            </div>
+          );
+        }
 
+      case 3:
+        if (editingTask) {
+          return (
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                📅 Due Date (Optional)
+              </label>
               <input
                 type="date"
                 name="dueDate"
                 value={formData.dueDate}
                 onChange={handleInputChange}
-                className="w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00569c] focus:ring-2 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
               />
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-4 pb-8">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 py-4 bg-gradient-to-r from-[#00569c] to-[#003f73] text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed font-bold text-lg flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Saving...
-                  </>
-                ) : editingTask ? (
-                  <>
-                    <span>✏️</span>
-                    Update Task
-                  </>
-                ) : (
-                  <>
-                    <span>➕</span>
-                    Create Task
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-4 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-all duration-200 font-bold text-lg flex items-center justify-center gap-2"
-              >
-                <span>❌</span>
-                Cancel
-              </button>
+          );
+        } else {
+          return (
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  👤 Assign To
+                </label>
+                <select
+                  name="assignedTo"
+                  value={formData.assignedTo}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
+                >
+                  <option value="">Select authority...</option>
+                  {authorities?.map((auth) => (
+                    <option key={auth._id} value={auth._id}>
+                      {auth.firstName} {auth.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  ⚡ Priority
+                </label>
+                <select
+                  name="priority"
+                  value={formData.priority}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
+                >
+                  <option value="low">🟢 Low Priority</option>
+                  <option value="medium">🟡 Medium Priority</option>
+                  <option value="high">🔴 High Priority</option>
+                </select>
+              </div>
             </div>
-          </form>
+          );
+        }
+
+      case 4:
+        return (
+          <div className="space-y-6">
+            {!editingTask && formData.reportId && (
+              <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded">
+                <p className="text-sm text-green-700 font-medium">
+                  ✓ Report selected: <span className="font-bold">{pendingReports.find(r => r._id === formData.reportId)?.title}</span>
+                </p>
+              </div>
+            )}
+            <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+              <p className="text-sm text-blue-700 font-medium">
+                ✓ Title: <span className="font-bold">{formData.title}</span>
+              </p>
+            </div>
+            <div className="p-4 bg-purple-50 border-l-4 border-purple-500 rounded">
+              <p className="text-sm text-purple-700 font-medium">
+                ✓ Assigned to: <span className="font-bold">{authorities?.find(a => a._id === formData.assignedTo)?.firstName} {authorities?.find(a => a._id === formData.assignedTo)?.lastName}</span>
+              </p>
+            </div>
+            <div className="p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+              <p className="text-sm text-orange-700 font-medium">
+                ✓ Priority: <span className="font-bold">{formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
+              </p>
+            </div>
+            {formData.dueDate && (
+              <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                <p className="text-sm text-red-700 font-medium">
+                  ✓ Due: <span className="font-bold">{new Date(formData.dueDate).toLocaleDateString()}</span>
+                </p>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                📅 Due Date (Optional)
+              </label>
+              <input
+                type="date"
+                name="dueDate"
+                value={formData.dueDate}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00569c] focus:ring-4 focus:ring-[#00569c]/20 transition text-gray-700 font-medium"
+              />
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-gradient-to-r from-[#00569c] to-[#003f73] text-white px-8 py-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">
+              {editingTask ? "Edit Task" : "Create New Task"}
+            </h1>
+            <p className="text-blue-100 text-sm">
+              Step {step} of {totalSteps}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="h-1 bg-gray-200">
+          <div
+            className="h-full bg-gradient-to-r from-[#00569c] to-[#003f73] transition-all duration-300"
+            style={{ width: `${(step / totalSteps) * 100}%` }}
+          ></div>
+        </div>
+
+        {/* Step Indicator */}
+        <div className="px-8 py-6 border-b border-gray-200 bg-gray-50">
+          <div className="flex justify-between items-center">
+            {stepTitles.map((title, index) => (
+              <div key={index} className="flex flex-col items-center flex-1">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-all ${
+                    index + 1 === step
+                      ? "bg-[#00569c] text-white scale-110"
+                      : index + 1 < step
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-300 text-gray-600"
+                  }`}
+                >
+                  {index + 1 < step ? "✓" : index + 1}
+                </div>
+                <span className="text-xs font-medium text-gray-700 text-center">
+                  {title}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-8 py-8">
+          {error && (
+            <div className="mb-6 p-4 rounded-lg bg-red-50 border-l-4 border-red-500 flex gap-3">
+              <span className="text-xl">⚠️</span>
+              <p className="text-red-700 font-medium">{error}</p>
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-6 p-4 rounded-lg bg-green-50 border-l-4 border-green-500 flex gap-3">
+              <span className="text-xl">✅</span>
+              <p className="text-green-700 font-medium">{success}</p>
+            </div>
+          )}
+
+          {renderStepContent()}
+        </div>
+
+        {/* Footer Buttons */}
+        <div className="border-t border-gray-200 bg-gray-50 px-8 py-6 flex gap-4">
+          <button
+            onClick={() => setStep(Math.max(1, step - 1))}
+            disabled={step === 1}
+            className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            ← Back
+          </button>
+          {step < totalSteps && (
+            <button
+              onClick={handleNextStep}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-[#00569c] to-[#003f73] text-white rounded-lg hover:shadow-lg transition font-medium"
+            >
+              Next →
+            </button>
+          )}
+          {step === totalSteps && (
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+            >
+              {loading ? "⏳ Saving..." : `✓ ${editingTask ? "Update" : "Create"} Task`}
+            </button>
+          )}
         </div>
       </div>
     </div>
