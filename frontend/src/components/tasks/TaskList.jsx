@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import taskApi from '../../services/taskApi';
-import { TaskCard } from './TaskCard';
+import React, { useEffect, useState } from "react";
+import taskApi from "../../services/taskApi";
+import { TaskCard } from "./TaskCard";
 
 // TaskList: fetches and renders tasks for the current user
 // SRP: managing the list of tasks
-export const TaskList = ({ isAdmin = false, filters = {}, refreshToken, onTaskDelete, onTaskEdit }) => {
+export const TaskList = ({
+  isAdmin = false,
+  filters = {},
+  refreshToken,
+  onTaskDelete,
+  onTaskEdit,
+}) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,7 +28,7 @@ export const TaskList = ({ isAdmin = false, filters = {}, refreshToken, onTaskDe
       }
       setTasks(Array.isArray(data?.tasks) ? data.tasks : []);
     } catch (err) {
-      const message = err.response?.data?.message || 'Failed to load tasks.';
+      const message = err.response?.data?.message || "Failed to load tasks.";
       setError(message);
       setTasks([]);
     } finally {
@@ -35,14 +41,14 @@ export const TaskList = ({ isAdmin = false, filters = {}, refreshToken, onTaskDe
   }, [refreshToken, isAdmin, JSON.stringify(filters)]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this task?')) return;
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
 
     try {
       await taskApi.deleteTask(id);
       setTasks((prev) => prev.filter((t) => t._id !== id));
       if (onTaskDelete) onTaskDelete(id);
     } catch (err) {
-      const message = err.response?.data?.message || 'Failed to delete task.';
+      const message = err.response?.data?.message || "Failed to delete task.";
       setError(message);
     }
   };
@@ -52,10 +58,11 @@ export const TaskList = ({ isAdmin = false, filters = {}, refreshToken, onTaskDe
     try {
       await taskApi.updateTaskStatus(taskId, newStatus);
       setTasks((prev) =>
-        prev.map((t) => (t._id === taskId ? { ...t, status: newStatus } : t))
+        prev.map((t) => (t._id === taskId ? { ...t, status: newStatus } : t)),
       );
     } catch (err) {
-      const message = err.response?.data?.message || 'Failed to update task status.';
+      const message =
+        err.response?.data?.message || "Failed to update task status.";
       setError(message);
     } finally {
       setStatusUpdating(null);
@@ -74,7 +81,7 @@ export const TaskList = ({ isAdmin = false, filters = {}, refreshToken, onTaskDe
     <div className="p-8 bg-white rounded-2xl shadow-lg border border-[#608A9A]/20 animate-report-fade-in">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-[#164871] font-universo tracking-wide">
-          {isAdmin ? 'All Tasks' : 'Your Tasks'}
+          {isAdmin ? "All Tasks" : "Your Tasks"}
         </h2>
         <button
           type="button"
@@ -93,7 +100,9 @@ export const TaskList = ({ isAdmin = false, filters = {}, refreshToken, onTaskDe
 
       {tasks.length === 0 ? (
         <p className="text-sm text-gray-600">
-          {isAdmin ? 'No tasks created yet.' : 'You have no assigned tasks yet.'}
+          {isAdmin
+            ? "No tasks created yet."
+            : "You have no assigned tasks yet."}
         </p>
       ) : (
         <div className="space-y-4">

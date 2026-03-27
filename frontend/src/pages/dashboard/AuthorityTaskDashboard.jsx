@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import taskApi from '../../services/taskApi';
-import { TaskList } from './TaskList';
-import { TaskDetailModal } from './TaskDetailModal';
+import React, { useState } from "react";
+import taskApi from "../../services/taskApi";
+import { TaskList } from "./TaskList";
+import { TaskDetailModal } from "./TaskDetailModal";
 
 // AuthorityTaskDashboard: authority view for assigned tasks
 // Allows authorities to view and update their assigned tasks
@@ -9,31 +9,33 @@ export const AuthorityTaskDashboard = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
-  const [statusError, setStatusError] = useState('');
+  const [statusError, setStatusError] = useState("");
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const filters = statusFilter !== 'all' ? { status: statusFilter } : {};
+  const filters = statusFilter !== "all" ? { status: statusFilter } : {};
 
   const handleTaskEdit = (task) => {
     setSelectedTask(task);
     setIsDetailModalOpen(true);
-    setStatusError('');
+    setStatusError("");
   };
 
   const handleStatusChange = async (newStatus) => {
     if (!selectedTask) return;
-    
+
     setIsStatusUpdating(true);
-    setStatusError('');
+    setStatusError("");
     try {
       await taskApi.updateTaskStatus(selectedTask._id, newStatus);
-      setSelectedTask((prev) => prev ? { ...prev, status: newStatus } : null);
+      setSelectedTask((prev) => (prev ? { ...prev, status: newStatus } : null));
       setRefreshToken((prev) => prev + 1);
     } catch (err) {
-      setStatusError(err?.response?.data?.message || 'Failed to update task status');
+      setStatusError(
+        err?.response?.data?.message || "Failed to update task status",
+      );
     } finally {
       setIsStatusUpdating(false);
     }
@@ -54,7 +56,9 @@ export const AuthorityTaskDashboard = () => {
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold text-gray-800">My Tasks</h2>
-        <p className="text-gray-600 text-sm mt-1">View and update your assigned investigation tasks</p>
+        <p className="text-gray-600 text-sm mt-1">
+          View and update your assigned investigation tasks
+        </p>
       </div>
 
       {/* Error Message */}
@@ -69,7 +73,9 @@ export const AuthorityTaskDashboard = () => {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Filters</h3>
         <div className="flex items-end gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Status
+            </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -83,7 +89,7 @@ export const AuthorityTaskDashboard = () => {
             </select>
           </div>
           <button
-            onClick={() => setStatusFilter('all')}
+            onClick={() => setStatusFilter("all")}
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
           >
             Reset
