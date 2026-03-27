@@ -346,11 +346,16 @@ export const AuthorityDashboard = () => {
                               setTurbidity('');
                               setContaminantsText('');
                             }}
+                            disabled={task.status === 'cancelled' && (!task.cancelledByRole || task.cancelledByRole === 'admin')}
                             className={`px-4 py-2 rounded-lg transition text-sm ${
-                              isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                              task.status === 'cancelled' && (!task.cancelledByRole || task.cancelledByRole === 'admin')
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                             }`}
                           >
-                            {isSelected ? 'Selected' : isResolvedTab ? 'View Summary' : 'Log Water Sample'}
+                            {task.status === 'cancelled' && (!task.cancelledByRole || task.cancelledByRole === 'admin')
+                              ? 'Cancelled by Admin' 
+                              : isSelected ? 'Selected' : isResolvedTab ? 'View Summary' : 'Log Water Sample'}
                           </button>
                         </div>
                       );
@@ -369,6 +374,18 @@ export const AuthorityDashboard = () => {
                       {isResolvedTab
                         ? 'Select a resolved report to view its water log history.'
                         : 'Select an assigned report to create a water log.'}
+                    </div>
+                  ) : selectedTask.status === 'cancelled' && (!selectedTask.cancelledByRole || selectedTask.cancelledByRole === 'admin') ? (
+                    <div className="p-4 rounded-lg bg-gray-50 border border-gray-300 text-gray-700">
+                      <p className="font-semibold text-gray-900 mb-2">📋 Task Cancelled by Admin</p>
+                      <p className="text-sm text-gray-600">
+                        This task has been cancelled by the admin and will be reassigned to another authority. You cannot log water samples for this task anymore.
+                      </p>
+                      {selectedTask.cancellationReason && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          <span className="font-semibold">Reason:</span> {selectedTask.cancellationReason}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <>

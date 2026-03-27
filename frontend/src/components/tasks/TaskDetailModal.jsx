@@ -10,7 +10,13 @@ export const TaskDetailModal = ({
   onClose,
   onStatusChange,
   isStatusUpdating,
+  userRole = "admin",
+  onReassign,
 }) => {
+  const [showCancelReasonModal, setShowCancelReasonModal] = React.useState(false);
+  const [cancellationReason, setCancellationReason] = React.useState("");
+  const [showReassignModal, setShowReassignModal] = React.useState(false);
+
   if (!isOpen || !task) return null;
 
   const formatDate = (date) => {
@@ -185,12 +191,21 @@ export const TaskDetailModal = ({
         )}
 
         {/* Cancellation Reason (if cancelled) */}
-        {task.cancellationReason && (
+        {task.status === 'cancelled' && (
           <div className="mb-6 p-4 bg-gray-100 border border-gray-300 rounded-lg">
             <h4 className="text-sm font-semibold text-gray-900 mb-2">
-              Cancellation Reason
+              Task Cancelled {task.cancelledByRole && task.cancelledByRole !== 'admin' ? '(by Authority)' : '(by Admin)'}
             </h4>
-            <p className="text-sm text-gray-700">{task.cancellationReason}</p>
+            {task.cancellationReason && (
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold">Reason:</span> {task.cancellationReason}
+              </p>
+            )}
+            {!task.cancellationReason && (!task.cancelledByRole || task.cancelledByRole === 'admin') && (
+              <p className="text-sm text-gray-700">
+                This task was cancelled by an admin. It can be reassigned to another authority.
+              </p>
+            )}
           </div>
         )}
 
@@ -219,13 +234,23 @@ export const TaskDetailModal = ({
                   {isStatusUpdating ? "Updating..." : "Mark Complete"}
                 </button>
               )}
-              <button
-                onClick={() => onStatusChange("cancelled")}
-                disabled={isStatusUpdating}
-                className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isStatusUpdating ? "Updating..." : "Cancel Task"}
-              </button>
+              {userRole === "authority" ? (
+                <button
+                  onClick={() => setShowCancelReasonModal(true)}
+                  disabled={isStatusUpdating}
+                  className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isStatusUpdating ? "Updating..." : "Cancel Task"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowReassignModal(true)}
+                  disabled={isStatusUpdating}
+                  className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isStatusUpdating ? "Updating..." : "Cancel Task"}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -240,6 +265,96 @@ export const TaskDetailModal = ({
           </button>
         </div>
       </div>
+
+      {/* Authority Cancellation Reason Modal */}
+      {showCancelReasonModal && userRole === "authority" && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-2xl">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Cancel Task
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Please provide a reason for cancelling this task.
+            </p>
+
+            <textarea
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              placeholder="Enter cancellation reason..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00569c] mb-4"
+              style={{ height: 100 }}
+            />
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowCancelReasonModal(false);
+                  setCancellationReason("");
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!cancellationReason.trim()) {
+                    alert("Please provide a cancellation reason.");
+                    return;
+                  }
+                  await onStatusChange("cancelled", {
+                    cancellationReason: cancellationReason.trim(),
+                  });
+                  setShowCancelReasonModal(false);
+                  setCancellationReason("");
+                }}
+                disabled={isStatusUpdating || !cancellationReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isStatusUpdating ? "Cancelling..." : "Confirm Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Reassignment Modal */}
+      {showReassignModal && userRole === "admin" && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-2xl">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Cancel Task
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              This task will be cancelled and will be available for re-assignment to another authority in the future.
+            </p>
+
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                The report will remain "In Progress" and can be reassigned later.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowReassignModal(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              >
+                Keep Task
+              </button>
+              <button
+                onClick={async () => {
+                  await onStatusChange("cancelled");
+                  setShowReassignModal(false);
+                }}
+                disabled={isStatusUpdating}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isStatusUpdating ? "Cancelling..." : "Confirm Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

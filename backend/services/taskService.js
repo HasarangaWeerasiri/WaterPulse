@@ -203,12 +203,22 @@ class TaskService {
       throw new Error('Forbidden: You can only update tasks assigned to you');
     }
 
-    // Cancellation requires a reason
+    // Cancellation handling based on role
     if (status === 'cancelled') {
-      if (!cancellationReason || cancellationReason.trim() === '') {
-        throw new Error('A cancellation reason is required when cancelling a task');
+      // Authority users MUST provide a cancellation reason
+      if (requestingUserRole === 'authority') {
+        if (!cancellationReason || cancellationReason.trim() === '') {
+          throw new Error('A cancellation reason is required when cancelling a task');
+        }
+        task.cancellationReason = cancellationReason.trim();
       }
-      task.cancellationReason = cancellationReason.trim();
+      // Admin users can cancel without providing a reason
+      else if (requestingUserRole === 'admin' && cancellationReason) {
+        task.cancellationReason = cancellationReason.trim();
+      }
+
+      // Track which role cancelled the task
+      task.cancelledByRole = requestingUserRole;
 
       // Restore the linked report back to Unverified (Pending Reports)
       // only if it's currently "In Progress" (avoid reverting resolved/confirmed reports).

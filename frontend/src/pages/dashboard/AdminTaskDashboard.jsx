@@ -48,10 +48,10 @@ export const AdminTaskDashboard = () => {
     }
   };
 
-  const handleStatusChange = async (taskId, newStatus) => {
+  const handleStatusChange = async (taskId, newStatus, additionalData = {}) => {
     try {
-      await taskApi.updateTaskStatus(taskId, newStatus);
-      setSelectedTask((prev) => (prev ? { ...prev, status: newStatus } : null));
+      await taskApi.updateTaskStatus(taskId, newStatus, additionalData);
+      setSelectedTask((prev) => (prev ? { ...prev, status: newStatus, ...additionalData } : null));
       setRefreshToken((prev) => prev + 1);
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to update task status");
@@ -205,7 +205,10 @@ export const AdminTaskDashboard = () => {
         task={selectedTask}
         isOpen={isDetailModalOpen}
         onClose={handleCloseDetailModal}
-        onStatusChange={handleStatusChange}
+        onStatusChange={(status, additionalData) =>
+          handleStatusChange(selectedTask?._id, status, additionalData)
+        }
+        userRole="admin"
       />
     </div>
   );

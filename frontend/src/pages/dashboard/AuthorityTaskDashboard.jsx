@@ -23,14 +23,14 @@ export const AuthorityTaskDashboard = () => {
     setStatusError("");
   };
 
-  const handleStatusChange = async (newStatus) => {
+  const handleStatusChange = async (newStatus, additionalData = {}) => {
     if (!selectedTask) return;
 
     setIsStatusUpdating(true);
     setStatusError("");
     try {
-      await taskApi.updateTaskStatus(selectedTask._id, newStatus);
-      setSelectedTask((prev) => (prev ? { ...prev, status: newStatus } : null));
+      await taskApi.updateTaskStatus(selectedTask._id, newStatus, additionalData);
+      setSelectedTask((prev) => (prev ? { ...prev, status: newStatus, ...additionalData } : null));
       setRefreshToken((prev) => prev + 1);
     } catch (err) {
       setStatusError(
@@ -113,6 +113,7 @@ export const AuthorityTaskDashboard = () => {
         onClose={handleCloseDetailModal}
         onStatusChange={handleStatusChange}
         isStatusUpdating={isStatusUpdating}
+        userRole="authority"
       />
     </div>
   );

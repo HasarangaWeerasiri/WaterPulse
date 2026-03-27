@@ -37,8 +37,10 @@ export const taskApi = {
   },
 
   // Update task status (admin and authority)
-  async updateTaskStatus(id, status) {
-    const response = await axios.put(`${TASK_API_BASE_URL}/${id}/status`, { status });
+  // For cancellation, can include cancellationReason (authority) or reassignTo (admin)
+  async updateTaskStatus(id, status, additionalData = {}) {
+    const payload = { status, ...additionalData };
+    const response = await axios.put(`${TASK_API_BASE_URL}/${id}/status`, payload);
     return response.data;
   },
 
