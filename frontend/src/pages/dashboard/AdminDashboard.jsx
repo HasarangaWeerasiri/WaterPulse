@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import AdminReportList from "../../components/reports/AdminReportList";
 import AdminReportsMap from "../../components/reports/AdminReportsMap";
+import AdminTaskDashboard from "./AdminTaskDashboard";
 import SafeZoneList from "../../components/reports/SafeZoneList";
 import SafeZonesMap from "../../components/reports/SafeZonesMap";
 import reportApi from "../../services/reportApi";
@@ -351,6 +352,7 @@ export const AdminDashboard = () => {
     }
   };
 
+  const tabs = ["overview", "create", "reports", "tasks", "waterlogs", "map"];
   const tabs = [
     "overview",
     "create",
@@ -533,6 +535,8 @@ export const AdminDashboard = () => {
         )}
 
         {activeTab === "reports" && <AdminReportList />}
+
+        {activeTab === "tasks" && <AdminTaskDashboard />}
 
         {activeTab === "tasks" && (
           <div className="p-6 bg-white shadow rounded-xl">
