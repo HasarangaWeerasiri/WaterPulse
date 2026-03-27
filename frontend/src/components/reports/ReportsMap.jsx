@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useMemo } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const DEFAULT_CENTER = { lat: 6.9271, lng: 79.8612 }; // Colombo fallback
 
@@ -15,12 +15,15 @@ export function ReportsMap({
   legendItems = [],
   colorForStatus,
   popupRenderer,
-  heightClass = 'h-[460px]',
+  heightClass = "h-[460px]",
 }) {
   const mapCenter = useMemo(() => {
     if (!reports?.length) return DEFAULT_CENTER;
-    const withLocation = reports.filter(r =>
-      r.location && Array.isArray(r.location.coordinates) && r.location.coordinates.length === 2,
+    const withLocation = reports.filter(
+      (r) =>
+        r.location &&
+        Array.isArray(r.location.coordinates) &&
+        r.location.coordinates.length === 2,
     );
     if (!withLocation.length) return DEFAULT_CENTER;
     const [lng, lat] = withLocation[0].location.coordinates;
@@ -28,10 +31,10 @@ export function ReportsMap({
   }, [reports]);
 
   const createIcon = (status) => {
-    const base = colorForStatus ? colorForStatus(status) : '#3b82f6';
+    const base = colorForStatus ? colorForStatus(status) : "#3b82f6";
 
     return L.divIcon({
-      className: '',
+      className: "",
       html: `
         <div style="
           position: relative;
@@ -72,7 +75,7 @@ export function ReportsMap({
           <h3 className="text-lg font-semibold text-[#164871]">{title}</h3>
           {legendItems.length > 0 && (
             <div className="flex items-center gap-3 text-xs text-slate-600">
-              {legendItems.map(item => (
+              {legendItems.map((item) => (
                 <div key={item.label} className="flex items-center gap-1.5">
                   <span
                     className="inline-block rounded-full"
@@ -80,7 +83,7 @@ export function ReportsMap({
                       width: 10,
                       height: 10,
                       backgroundColor: item.color,
-                      boxShadow: '0 0 0 2px rgba(148, 163, 184, 0.35)',
+                      boxShadow: "0 0 0 2px rgba(148, 163, 184, 0.35)",
                     }}
                   />
                   <span>{item.label}</span>
@@ -91,7 +94,9 @@ export function ReportsMap({
         </div>
       )}
 
-      <div className={`relative w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm ${heightClass}`}>
+      <div
+        className={`relative w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm ${heightClass}`}
+      >
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center text-sm font-medium bg-white/70 text-slate-700">
             Loading reports on map...
@@ -107,7 +112,7 @@ export function ReportsMap({
           center={mapCenter}
           zoom={11}
           scrollWheelZoom
-          style={{ height: '100%', width: '100%' }}
+          style={{ height: "100%", width: "100%" }}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -115,10 +120,16 @@ export function ReportsMap({
           />
 
           {reports
-            ?.filter(r => r.location && Array.isArray(r.location.coordinates) && r.location.coordinates.length === 2)
-            .map(report => {
+            ?.filter(
+              (r) =>
+                r.location &&
+                Array.isArray(r.location.coordinates) &&
+                r.location.coordinates.length === 2,
+            )
+            .map((report) => {
               const [lng, lat] = report.location.coordinates;
-              const status = report.status || 'Unverified';
+              const status =
+                report.markerStatus || report.status || "Unverified";
               const icon = createIcon(status);
 
               return (
