@@ -1,58 +1,65 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
-import { ProtectedRoute } from './components/ProtectedRoute'
-import { Navbar } from './components/Navbar'
-import { LandingPage } from './pages/LandingPage'
-import { LoginPage } from './pages/user/LoginPage'
-import { RegisterPage } from './pages/user/RegisterPage'
-import { HomePage } from './pages/dashboard/HomePage'
-import { AdminDashboard } from './pages/dashboard/AdminDashboard'
-import { AuthorityDashboard } from './pages/dashboard/AuthorityDashboard'
-import { UnauthorizedPage } from './pages/UnauthorizedPage'
-import { ReportCenter } from './pages/citizen/ReportCenter'
-import { ReportsMapPage } from './pages/citizen/ReportsMapPage'
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Navbar } from "./components/Navbar";
+import { LandingPage } from "./pages/LandingPage";
+import { LoginPage } from "./pages/user/LoginPage";
+import { RegisterPage } from "./pages/user/RegisterPage";
+import { HomePage } from "./pages/dashboard/HomePage";
+import { AdminDashboard } from "./pages/dashboard/AdminDashboard";
+import { AuthorityDashboard } from "./pages/dashboard/AuthorityDashboard";
+import { UnauthorizedPage } from "./pages/UnauthorizedPage";
+import { ReportCenter } from "./pages/citizen/ReportCenter";
+import { ReportsMapPage } from "./pages/citizen/ReportsMapPage";
 
 function RoleBasedRedirect() {
-  const { user } = useAuth()
-  const role = user?.role
-  if (role === 'admin') return <Navigate to="/admin-dashboard" replace />
-  if (role === 'authority') return <Navigate to="/authority-dashboard" replace />
-  return <Navigate to="/home" replace />
+  const { user } = useAuth();
+  const role = user?.role;
+  if (role === "admin") return <Navigate to="/admin-dashboard" replace />;
+  if (role === "authority")
+    return <Navigate to="/authority-dashboard" replace />;
+  return <Navigate to="/home" replace />;
 }
 
 function App() {
-  const { isAuthenticated, initializing } = useAuth()
-  const location = useLocation()
+  const { isAuthenticated, initializing } = useAuth();
+  const location = useLocation();
 
   if (initializing) {
     return (
       <div className="flex items-center justify-center h-screen text-[#164871] font-semibold tracking-widest text-sm">
         Loading...
       </div>
-    )
+    );
   }
 
   // Pages where the navbar should float over the content (no top padding needed)
-  const fullBleedRoutes = ['/']
-  const isFullBleed = fullBleedRoutes.includes(location.pathname)
+  const fullBleedRoutes = ["/"];
+  const isFullBleed = fullBleedRoutes.includes(location.pathname);
 
   return (
     <>
       <Navbar />
       {/* Only add top padding on non-fullbleed pages so content isn't hidden behind fixed navbar */}
-      <div className={isFullBleed ? '' : 'pt-24'}>
+      <div className={isFullBleed ? "" : "pt-24"}>
         <Routes>
           {/* Public */}
-          <Route path="/" element={isAuthenticated ? <RoleBasedRedirect /> : <LandingPage />} />
+          <Route
+            path="/"
+            element={isAuthenticated ? <RoleBasedRedirect /> : <LandingPage />}
+          />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={isAuthenticated ? <RoleBasedRedirect /> : <RegisterPage />} />
+          <Route
+            path="/register"
+            element={isAuthenticated ? <RoleBasedRedirect /> : <RegisterPage />}
+          />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* Citizen */}
           <Route
             path="/home"
             element={
-              <ProtectedRoute allowedRoles={['citizen']}>
+              <ProtectedRoute allowedRoles={["citizen"]}>
                 <HomePage />
               </ProtectedRoute>
             }
@@ -61,7 +68,7 @@ function App() {
           <Route
             path="/map"
             element={
-              <ProtectedRoute allowedRoles={['citizen']}>
+              <ProtectedRoute allowedRoles={["citizen"]}>
                 <ReportsMapPage />
               </ProtectedRoute>
             }
@@ -71,7 +78,7 @@ function App() {
           <Route
             path="/admin-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -81,7 +88,7 @@ function App() {
           <Route
             path="/authority-dashboard"
             element={
-              <ProtectedRoute allowedRoles={['authority']}>
+              <ProtectedRoute allowedRoles={["authority"]}>
                 <AuthorityDashboard />
               </ProtectedRoute>
             }
@@ -91,7 +98,7 @@ function App() {
           <Route
             path="/reports"
             element={
-              <ProtectedRoute allowedRoles={['citizen', 'admin', 'authority']}>
+              <ProtectedRoute allowedRoles={["citizen", "admin", "authority"]}>
                 <ReportCenter />
               </ProtectedRoute>
             }
@@ -100,12 +107,18 @@ function App() {
           {/* Catch-all */}
           <Route
             path="*"
-            element={isAuthenticated ? <RoleBasedRedirect /> : <Navigate to="/" replace />}
+            element={
+              isAuthenticated ? (
+                <RoleBasedRedirect />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
           />
         </Routes>
       </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
