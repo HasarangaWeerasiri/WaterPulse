@@ -51,7 +51,9 @@ export const AdminTaskDashboard = () => {
   const handleStatusChange = async (taskId, newStatus, additionalData = {}) => {
     try {
       await taskApi.updateTaskStatus(taskId, newStatus, additionalData);
-      setSelectedTask((prev) => (prev ? { ...prev, status: newStatus, ...additionalData } : null));
+      setSelectedTask((prev) =>
+        prev ? { ...prev, status: newStatus, ...additionalData } : null,
+      );
       setRefreshToken((prev) => prev + 1);
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to update task status");

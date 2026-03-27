@@ -29,8 +29,14 @@ export const AuthorityTaskDashboard = () => {
     setIsStatusUpdating(true);
     setStatusError("");
     try {
-      await taskApi.updateTaskStatus(selectedTask._id, newStatus, additionalData);
-      setSelectedTask((prev) => (prev ? { ...prev, status: newStatus, ...additionalData } : null));
+      await taskApi.updateTaskStatus(
+        selectedTask._id,
+        newStatus,
+        additionalData,
+      );
+      setSelectedTask((prev) =>
+        prev ? { ...prev, status: newStatus, ...additionalData } : null,
+      );
       setRefreshToken((prev) => prev + 1);
     } catch (err) {
       setStatusError(

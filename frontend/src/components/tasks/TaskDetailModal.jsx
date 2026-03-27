@@ -13,7 +13,8 @@ export const TaskDetailModal = ({
   userRole = "admin",
   onReassign,
 }) => {
-  const [showCancelReasonModal, setShowCancelReasonModal] = React.useState(false);
+  const [showCancelReasonModal, setShowCancelReasonModal] =
+    React.useState(false);
   const [cancellationReason, setCancellationReason] = React.useState("");
   const [showReassignModal, setShowReassignModal] = React.useState(false);
 
@@ -191,21 +192,27 @@ export const TaskDetailModal = ({
         )}
 
         {/* Cancellation Reason (if cancelled) */}
-        {task.status === 'cancelled' && (
+        {task.status === "cancelled" && (
           <div className="mb-6 p-4 bg-gray-100 border border-gray-300 rounded-lg">
             <h4 className="text-sm font-semibold text-gray-900 mb-2">
-              Task Cancelled {task.cancelledByRole && task.cancelledByRole !== 'admin' ? '(by Authority)' : '(by Admin)'}
+              Task Cancelled{" "}
+              {task.cancelledByRole && task.cancelledByRole !== "admin"
+                ? "(by Authority)"
+                : "(by Admin)"}
             </h4>
             {task.cancellationReason && (
               <p className="text-sm text-gray-700">
-                <span className="font-semibold">Reason:</span> {task.cancellationReason}
+                <span className="font-semibold">Reason:</span>{" "}
+                {task.cancellationReason}
               </p>
             )}
-            {!task.cancellationReason && (!task.cancelledByRole || task.cancelledByRole === 'admin') && (
-              <p className="text-sm text-gray-700">
-                This task was cancelled by an admin. It can be reassigned to another authority.
-              </p>
-            )}
+            {!task.cancellationReason &&
+              (!task.cancelledByRole || task.cancelledByRole === "admin") && (
+                <p className="text-sm text-gray-700">
+                  This task was cancelled by an admin. It can be reassigned to
+                  another authority.
+                </p>
+              )}
           </div>
         )}
 
@@ -325,12 +332,14 @@ export const TaskDetailModal = ({
               Cancel Task
             </h2>
             <p className="text-sm text-gray-600 mb-6">
-              This task will be cancelled and will be available for re-assignment to another authority in the future.
+              This task will be cancelled and will be available for
+              re-assignment to another authority in the future.
             </p>
 
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
-                The report will remain "In Progress" and can be reassigned later.
+                The report will remain "In Progress" and can be reassigned
+                later.
               </p>
             </div>
 
