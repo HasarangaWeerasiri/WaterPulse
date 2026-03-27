@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import safeZoneApi from "../../services/safeZoneApi";
-import { useAuth } from "../../context/AuthContext";
 
 const SafeZoneList = () => {
   const [safeZones, setSafeZones] = useState([]);
@@ -148,7 +147,6 @@ const SafeZoneList = () => {
     if (!window.confirm("Delete this safe zone? This cannot be undone."))
       return;
 
-    setDeleteError("");
     setDeletingZoneId(zoneId);
     try {
       await safeZoneApi.deleteSafeZone(zoneId);

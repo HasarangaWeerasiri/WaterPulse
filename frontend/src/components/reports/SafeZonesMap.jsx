@@ -11,28 +11,42 @@ const TYPE_COLORS = {
   Other: "#6b7280", // Gray
 };
 
+const UNAVAILABLE_COLOR = "#ef4444"; // Red for unavailable
+
 export function SafeZonesMap() {
   const { safeZones, loading, error } = useSafeZonesForMap();
 
   const colorForType = (type) => TYPE_COLORS[type] || "#3b82f6";
+
+  // Color function for the map - handles both status (for unavailable) and type
+  const colorForStatus = (statusValue) => {
+    if (statusValue === "Unavailable") return UNAVAILABLE_COLOR;
+    return TYPE_COLORS[statusValue] || "#3b82f6";
+  };
 
   const legendItems = [
     { label: "Tanker", color: TYPE_COLORS["Tanker"] },
     { label: "Well", color: TYPE_COLORS["Well"] },
     { label: "Filter", color: TYPE_COLORS["Filter"] },
     { label: "Tap", color: TYPE_COLORS["Tap"] },
+    { label: "Borehole", color: TYPE_COLORS["Borehole"] },
+    { label: "Other", color: TYPE_COLORS["Other"] },
+    { label: "Unavailable", color: UNAVAILABLE_COLOR },
   ];
 
   // Convert safe zones to reports-like format for ReportsMap
+  // For unavailable zones, status = "Unavailable" (shows red)
+  // For available zones, status = type name (shows type color)
   const zonesForMap = safeZones.map((zone) => ({
     _id: zone._id,
     title: zone.name,
     address: zone.address || "No address available",
     description: zone.description || "",
     location: zone.location,
-    status: zone.isAvailable ? "Available" : "Unavailable",
+    status: zone.isAvailable ? zone.type : "Unavailable",
     type: zone.type,
     createdBy: zone.createdBy,
+    isAvailable: zone.isAvailable,
   }));
 
   return (
@@ -42,7 +56,7 @@ export function SafeZonesMap() {
       loading={loading}
       error={error}
       legendItems={legendItems}
-      colorForStatus={(type) => colorForType(type)}
+      colorForStatus={colorForStatus}
       popupRenderer={(zone) => (
         <div
           className="space-y-1 text-xs text-slate-800"
