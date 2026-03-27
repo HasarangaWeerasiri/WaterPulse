@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import AdminReportList from "../../components/reports/AdminReportList";
 import AdminReportsMap from "../../components/reports/AdminReportsMap";
+import AdminTaskDashboard from "./AdminTaskDashboard";
 import SafeZoneList from "../../components/reports/SafeZoneList";
 import SafeZonesMap from "../../components/reports/SafeZonesMap";
 import TaskListSection from "../../components/tasks/TaskListSection";
