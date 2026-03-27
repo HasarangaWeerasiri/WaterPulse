@@ -48,6 +48,11 @@ const taskSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  cancelledByRole: {
+    type: String,
+    enum: ["admin", "authority"],
+    default: null
+  },
   resolutionNotes: {
     type: String,
     trim: true
