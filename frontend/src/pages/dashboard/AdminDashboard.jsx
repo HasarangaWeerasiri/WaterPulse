@@ -5,6 +5,7 @@ import axios from "axios";
 import AdminReportList from "../../components/reports/AdminReportList";
 import AdminReportsMap from "../../components/reports/AdminReportsMap";
 import SafeZoneList from "../../components/reports/SafeZoneList";
+import SafeZonesMap from "../../components/reports/SafeZonesMap";
 import reportApi from "../../services/reportApi";
 import taskApi from "../../services/taskApi";
 import waterLogApi from "../../services/waterLogApi";
@@ -356,6 +357,7 @@ export const AdminDashboard = () => {
     "reports",
     "tasks",
     "safezones",
+    "safezones-map",
     "waterlogs",
     "map",
   ];
@@ -668,6 +670,12 @@ export const AdminDashboard = () => {
               Safe Water Zones
             </h3>
             <SafeZoneList />
+          </div>
+        )}
+
+        {activeTab === "safezones-map" && (
+          <div className="p-2">
+            <SafeZonesMap />
           </div>
         )}
 
