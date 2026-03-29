@@ -64,49 +64,70 @@ export const TaskCard = ({
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2 flex-shrink-0">
+      <div className="flex items-center justify-end gap-2 flex-shrink-0 flex-wrap">
         {onView && (
           <button
             type="button"
             onClick={onView}
-            className="px-4 py-2 text-sm font-medium text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
+            className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:shadow-lg hover:scale-105 hover:from-blue-600 hover:to-blue-700 transition-all duration-200 active:scale-95"
+            title="View task details"
           >
-            View
+            <span>👁️</span>
+            <span>View</span>
           </button>
         )}
         {onEdit && status === "pending" && (
           <button
             type="button"
             onClick={onEdit}
-            className="px-4 py-2 text-sm font-medium text-white transition bg-[#164871] rounded-lg hover:bg-[#608A9A]"
+            className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg hover:shadow-lg hover:scale-105 hover:from-purple-600 hover:to-purple-700 transition-all duration-200 active:scale-95"
+            title="Edit task"
           >
-            Edit
+            <span>✏️</span>
+            <span>Edit</span>
           </button>
         )}
         {onStatusChange && status !== "completed" && status !== "cancelled" && (
-          <select
-            value=""
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 appearance-none bg-white cursor-pointer"
-            defaultValue=""
-          >
-            <option value="" disabled>
-              Update Status
-            </option>
-            {status === "pending" && <option value="in_progress">Start</option>}
-            {status === "in_progress" && (
-              <option value="completed">Complete</option>
-            )}
-            <option value="cancelled">Cancel</option>
-          </select>
+          <div className="relative">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg hover:shadow-lg hover:scale-105 hover:from-amber-600 hover:to-amber-700 transition-all duration-200 active:scale-95"
+              title="Change task status"
+            >
+              <span>⚙️</span>
+              <span>Status</span>
+            </button>
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  onStatusChange(e.target.value);
+                }
+              }}
+              className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Update Status
+              </option>
+              {status === "pending" && (
+                <option value="in_progress">Start</option>
+              )}
+              {status === "in_progress" && (
+                <option value="completed">Complete</option>
+              )}
+              <option value="cancelled">Cancel</option>
+            </select>
+          </div>
         )}
         {onDelete && (
           <button
             type="button"
             onClick={onDelete}
-            className="px-4 py-2 text-sm font-medium text-white transition bg-red-600 rounded-lg hover:bg-red-700"
+            className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-lg hover:shadow-lg hover:scale-105 hover:from-red-600 hover:to-red-700 transition-all duration-200 active:scale-95"
+            title="Delete task"
           >
-            Delete
+            <span>🗑️</span>
+            <span>Delete</span>
           </button>
         )}
       </div>

@@ -221,9 +221,12 @@ class TaskService {
       task.cancelledByRole = requestingUserRole;
 
       // Restore the linked report back to Unverified (Pending Reports)
-      // only if it's currently "In Progress" (avoid reverting resolved/confirmed reports).
+      // Revert any report status EXCEPT final statuses (Resolved, Spam)
       await ContaminationReport.findOneAndUpdate(
-        { _id: task.reportId, status: 'In Progress' },
+        { 
+          _id: task.reportId, 
+          status: { $in: ['Unverified', 'In Progress', 'Confirmed'] } // Only revert non-final statuses
+        },
         { status: 'Unverified' }
       );
     }

@@ -1,9 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import taskApi from "../../services/taskApi";
 import reportApi from "../../services/reportApi";
+import { AuthContext } from "../../context/AuthContext";
+import TaskCancelReasonModal from "./TaskCancelReasonModal";
 
-export const TaskDetailModal = ({ task, isOpen, onClose }) => {
+export const TaskDetailModal = ({ task, isOpen, onClose, onTaskUpdated }) => {
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const { user } = useContext(AuthContext) || {};
+
   if (!isOpen || !task) return null;
+
+  const isAuthority = user?.role === "authority";
+  const isAdmin = user?.role === "admin";
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -61,6 +70,24 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
     }
   };
 
+  const handleAuthorityCancelTask = async (reason) => {
+    setCancelLoading(true);
+    try {
+      await taskApi.updateTaskStatus(task._id, "cancelled", {
+        cancellationReason: reason,
+        cancelledByRole: "authority",
+      });
+      if (onTaskUpdated) onTaskUpdated();
+      setCancelModalOpen(false);
+      onClose();
+    } catch (err) {
+      console.error("Failed to cancel task:", err);
+      alert(err?.response?.data?.message || "Failed to cancel task");
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   const priority = getPriorityLevel(task.priority);
 
   return (
@@ -69,7 +96,7 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
         {/* Header */}
         <div
           className={`bg-gradient-to-r ${getStatusColor(
-            task.status
+            task.status,
           )} text-white px-8 py-10 relative`}
         >
           <div className="flex justify-between items-start">
@@ -82,8 +109,12 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
                 <span className="px-4 py-2 bg-white/20 backdrop-blur rounded-full text-sm font-bold capitalize">
                   {task.status.replace("_", " ")}
                 </span>
-                <span className={`px-4 py-2 rounded-full text-sm font-bold ${priority.color}`}>
-                  {priority.icon} {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                <span
+                  className={`px-4 py-2 rounded-full text-sm font-bold ${priority.color}`}
+                >
+                  {priority.icon}{" "}
+                  {task.priority.charAt(0).toUpperCase() +
+                    task.priority.slice(1)}
                 </span>
                 {isOverdue && (
                   <span className="px-4 py-2 bg-white/20 backdrop-blur rounded-full text-sm font-bold">
@@ -96,8 +127,18 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
               onClick={onClose}
               className="text-white hover:bg-white/20 p-3 rounded-full transition-all"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -111,7 +152,9 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
               <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
                 <span className="text-2xl">📝</span> Description
               </h3>
-              <p className="text-gray-700 leading-relaxed">{task.description}</p>
+              <p className="text-gray-700 leading-relaxed">
+                {task.description}
+              </p>
             </div>
           )}
 
@@ -182,17 +225,29 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
               </h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <p className="text-xs font-bold text-gray-500 uppercase">Created</p>
-                  <p className="text-gray-700 font-medium">{formatDate(task.createdAt)}</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase">
+                    Created
+                  </p>
+                  <p className="text-gray-700 font-medium">
+                    {formatDate(task.createdAt)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-gray-500 uppercase">Last Updated</p>
-                  <p className="text-gray-700 font-medium">{formatDate(task.updatedAt)}</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase">
+                    Last Updated
+                  </p>
+                  <p className="text-gray-700 font-medium">
+                    {formatDate(task.updatedAt)}
+                  </p>
                 </div>
                 {task.dueDate && (
                   <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase">Due Date</p>
-                    <p className={`font-medium ${isOverdue ? "text-red-600 font-bold" : "text-gray-700"}`}>
+                    <p className="text-xs font-bold text-gray-500 uppercase">
+                      Due Date
+                    </p>
+                    <p
+                      className={`font-medium ${isOverdue ? "text-red-600 font-bold" : "text-gray-700"}`}
+                    >
                       {formatDate(task.dueDate)}
                     </p>
                   </div>
@@ -219,11 +274,14 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
               <div className="space-y-2">
                 <p className="text-sm text-red-800">
                   <span className="font-bold">Cancelled by:</span>{" "}
-                  {task.cancelledByRole === "admin" ? "Administrator" : "Authority"}
+                  {task.cancelledByRole === "admin"
+                    ? "Administrator"
+                    : "Authority"}
                 </p>
                 {task.cancellationReason ? (
                   <p className="text-red-800">
-                    <span className="font-bold">Reason:</span> {task.cancellationReason}
+                    <span className="font-bold">Reason:</span>{" "}
+                    {task.cancellationReason}
                   </p>
                 ) : (
                   <p className="text-red-800 text-sm">
@@ -236,33 +294,41 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
 
           {/* Additional Details */}
           <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">📊 Task Metadata</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">
+              📊 Task Metadata
+            </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-gray-500 font-bold uppercase">Task ID</p>
-                <p className="text-gray-700 font-mono text-xs mt-1">{task._id}</p>
+                <p className="text-gray-700 font-mono text-xs mt-1">
+                  {task._id}
+                </p>
               </div>
               <div>
                 <p className="text-gray-500 font-bold uppercase">Status</p>
                 <p className="text-gray-700 capitalize">{task.status}</p>
               </div>
               <div>
-                <p className="text-gray-500 font-bold uppercase">Priority Level</p>
+                <p className="text-gray-500 font-bold uppercase">
+                  Priority Level
+                </p>
                 <p className="text-gray-700 capitalize">{task.priority}</p>
               </div>
               <div>
                 <p className="text-gray-500 font-bold uppercase">Created By</p>
-                <p className="text-gray-700">{task.assignedBy?.firstName} {task.assignedBy?.lastName}</p>
+                <p className="text-gray-700">
+                  {task.assignedBy?.firstName} {task.assignedBy?.lastName}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 bg-gray-50 px-8 py-6">
+        <div className="border-t border-gray-200 bg-gray-50 px-8 py-6 flex gap-4">
           <button
             onClick={onClose}
-            className="w-full px-6 py-3 bg-gradient-to-r from-[#00569c] to-[#003f73] text-white rounded-lg hover:shadow-lg transition font-bold flex items-center justify-center gap-2"
+            className="flex-1 px-6 py-3 bg-gradient-to-r from-[#00569c] to-[#003f73] text-white rounded-lg hover:shadow-lg transition font-bold flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -273,7 +339,29 @@ export const TaskDetailModal = ({ task, isOpen, onClose }) => {
             </svg>
             Close
           </button>
+
+          {isAuthority &&
+            task.status !== "completed" &&
+            task.status !== "cancelled" && (
+              <button
+                onClick={() => setCancelModalOpen(true)}
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg transition font-bold flex items-center justify-center gap-2"
+                title="Cancel this task (requires reason)"
+              >
+                <span>❌</span>
+                Cancel Task
+              </button>
+            )}
         </div>
+
+        {/* Cancel Reason Modal */}
+        <TaskCancelReasonModal
+          isOpen={cancelModalOpen}
+          onClose={() => setCancelModalOpen(false)}
+          onConfirm={handleAuthorityCancelTask}
+          taskTitle={task.title}
+          loading={cancelLoading}
+        />
       </div>
     </div>
   );

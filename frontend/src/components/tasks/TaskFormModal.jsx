@@ -22,7 +22,6 @@ export const TaskFormModal = ({
   const [pendingReports, setPendingReports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -94,9 +93,8 @@ export const TaskFormModal = ({
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
-    setSuccess("");
 
     if (!editingTask?.reportId && !formData.reportId) {
       setError("Please select a report");
@@ -125,26 +123,29 @@ export const TaskFormModal = ({
       if (editingTask) {
         delete payload.reportId;
         await taskApi.updateTask(editingTask._id, payload);
-        setSuccess("Task updated successfully!");
       } else {
         await taskApi.createTask(payload);
-        setSuccess("Task created successfully!");
       }
 
+      // Reset loading and close modal on success
+      setLoading(false);
       setTimeout(() => {
         onSuccess();
         onClose();
-      }, 1500);
+      }, 200);
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to save task");
+      console.error("Task submission error:", err);
       setLoading(false);
+      const errorMessage =
+        err?.response?.data?.message || err?.message || "Failed to save task";
+      setError(errorMessage);
     }
   };
 
   if (!isOpen) return null;
 
   const totalSteps = editingTask ? 3 : 4;
-  const stepTitles = editingTask 
+  const stepTitles = editingTask
     ? ["Task Details", "Assignment", "Final Review"]
     : ["Select Report", "Task Details", "Assignment", "Final Review"];
 
@@ -201,7 +202,9 @@ export const TaskFormModal = ({
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-2">Select the contamination report that this task addresses.</p>
+              <p className="text-xs text-gray-500 mt-2">
+                Select the contamination report that this task addresses.
+              </p>
             </div>
           );
         }
@@ -340,7 +343,13 @@ export const TaskFormModal = ({
             {!editingTask && formData.reportId && (
               <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded">
                 <p className="text-sm text-green-700 font-medium">
-                  ✓ Report selected: <span className="font-bold">{pendingReports.find(r => r._id === formData.reportId)?.title}</span>
+                  ✓ Report selected:{" "}
+                  <span className="font-bold">
+                    {
+                      pendingReports.find((r) => r._id === formData.reportId)
+                        ?.title
+                    }
+                  </span>
                 </p>
               </div>
             )}
@@ -351,18 +360,35 @@ export const TaskFormModal = ({
             </div>
             <div className="p-4 bg-purple-50 border-l-4 border-purple-500 rounded">
               <p className="text-sm text-purple-700 font-medium">
-                ✓ Assigned to: <span className="font-bold">{authorities?.find(a => a._id === formData.assignedTo)?.firstName} {authorities?.find(a => a._id === formData.assignedTo)?.lastName}</span>
+                ✓ Assigned to:{" "}
+                <span className="font-bold">
+                  {
+                    authorities?.find((a) => a._id === formData.assignedTo)
+                      ?.firstName
+                  }{" "}
+                  {
+                    authorities?.find((a) => a._id === formData.assignedTo)
+                      ?.lastName
+                  }
+                </span>
               </p>
             </div>
             <div className="p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
               <p className="text-sm text-orange-700 font-medium">
-                ✓ Priority: <span className="font-bold">{formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)}</span>
+                ✓ Priority:{" "}
+                <span className="font-bold">
+                  {formData.priority.charAt(0).toUpperCase() +
+                    formData.priority.slice(1)}
+                </span>
               </p>
             </div>
             {formData.dueDate && (
               <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded">
                 <p className="text-sm text-red-700 font-medium">
-                  ✓ Due: <span className="font-bold">{new Date(formData.dueDate).toLocaleDateString()}</span>
+                  ✓ Due:{" "}
+                  <span className="font-bold">
+                    {new Date(formData.dueDate).toLocaleDateString()}
+                  </span>
                 </p>
               </div>
             )}
@@ -403,8 +429,18 @@ export const TaskFormModal = ({
             onClick={onClose}
             className="text-white hover:bg-white/20 p-2 rounded-full transition-all"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -427,8 +463,8 @@ export const TaskFormModal = ({
                     index + 1 === step
                       ? "bg-[#00569c] text-white scale-110"
                       : index + 1 < step
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-300 text-gray-600"
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-300 text-gray-600"
                   }`}
                 >
                   {index + 1 < step ? "✓" : index + 1}
@@ -447,13 +483,6 @@ export const TaskFormModal = ({
             <div className="mb-6 p-4 rounded-lg bg-red-50 border-l-4 border-red-500 flex gap-3">
               <span className="text-xl">⚠️</span>
               <p className="text-red-700 font-medium">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-6 p-4 rounded-lg bg-green-50 border-l-4 border-green-500 flex gap-3">
-              <span className="text-xl">✅</span>
-              <p className="text-green-700 font-medium">{success}</p>
             </div>
           )}
 
@@ -483,7 +512,9 @@ export const TaskFormModal = ({
               disabled={loading}
               className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
             >
-              {loading ? "⏳ Saving..." : `✓ ${editingTask ? "Update" : "Create"} Task`}
+              {loading
+                ? "⏳ Saving..."
+                : `✓ ${editingTask ? "Update" : "Create"} Task`}
             </button>
           )}
         </div>

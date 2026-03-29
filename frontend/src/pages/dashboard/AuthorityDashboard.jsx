@@ -20,6 +20,11 @@ export const AuthorityDashboard = () => {
 
   const [selectedTaskId, setSelectedTaskId] = useState("");
 
+  // Task cancellation
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancellingTaskId, setCancellingTaskId] = useState("");
+
   // Water log creation form (for the selected assigned report)
   const defaultRegion = useMemo(() => {
     return user?.location?.district || user?.location?.city || "";
@@ -149,16 +154,58 @@ export const AuthorityDashboard = () => {
     return myTasks.filter((t) => t.reportId?.status === "Resolved");
   }, [myTasks]);
 
+  const cancelledTasks = useMemo(() => {
+    return myTasks.filter((t) => t.status === "cancelled");
+  }, [myTasks]);
+
   const manageTasks = useMemo(() => {
-    return myTasks.filter((t) => t.reportId?.status !== "Resolved");
+    return myTasks.filter(
+      (t) => t.reportId?.status !== "Resolved" && t.status !== "cancelled",
+    );
   }, [myTasks]);
 
   const isResolvedTab = activeTab === "resolved";
-  const tasksForTab = isResolvedTab ? resolvedTasks : manageTasks;
+  const isCancelledTab = activeTab === "cancelled";
+  const tasksForTab = isResolvedTab
+    ? resolvedTasks
+    : isCancelledTab
+      ? cancelledTasks
+      : manageTasks;
 
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleCancelTask = async () => {
+    if (!selectedTaskId) return;
+    if (!cancellationReason.trim()) {
+      alert("Please provide a cancellation reason.");
+      return;
+    }
+
+    setCancellingTaskId(selectedTaskId);
+    try {
+      await taskApi.updateTaskStatus(selectedTaskId, "cancelled", {
+        cancellationReason: cancellationReason.trim(),
+        cancelledByRole: "authority",
+      });
+
+      // Reset form
+      setShowCancellationModal(false);
+      setCancellationReason("");
+      setSelectedTaskId("");
+
+      // Refresh tasks
+      await refreshMyTasks();
+    } catch (err) {
+      alert(
+        err?.response?.data?.message ||
+          "Failed to cancel task. Please try again.",
+      );
+    } finally {
+      setCancellingTaskId("");
+    }
   };
 
   return (
@@ -224,6 +271,16 @@ export const AuthorityDashboard = () => {
           >
             Resolved
           </button>
+          <button
+            onClick={() => setActiveTab("cancelled")}
+            className={`px-6 py-2 rounded-lg font-semibold transition ${
+              activeTab === "cancelled"
+                ? "bg-green-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Cancelled
+          </button>
         </div>
 
         {/* Overview Tab */}
@@ -239,7 +296,7 @@ export const AuthorityDashboard = () => {
                 manage regional water infrastructure. You have authority-level
                 access to {user?.location?.district || "your district"}.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-green-50 p-6 rounded-lg">
                   <h3 className="text-xl font-bold text-green-600 mb-2">
                     📍 District
@@ -254,8 +311,11 @@ export const AuthorityDashboard = () => {
                   </h3>
                   <p className="text-gray-600">
                     {
-                      myTasks.filter((t) => t.reportId?.status !== "Resolved")
-                        .length
+                      myTasks.filter(
+                        (t) =>
+                          t.reportId?.status !== "Resolved" &&
+                          t.status !== "cancelled",
+                      ).length
                     }{" "}
                     reports awaiting action
                   </p>
@@ -270,6 +330,15 @@ export const AuthorityDashboard = () => {
                         .length
                     }{" "}
                     resolved reports
+                  </p>
+                </div>
+                <div className="bg-red-50 p-6 rounded-lg">
+                  <h3 className="text-xl font-bold text-red-600 mb-2">
+                    🚫 Cancelled
+                  </h3>
+                  <p className="text-gray-600">
+                    {myTasks.filter((t) => t.status === "cancelled").length}{" "}
+                    cancelled tasks
                   </p>
                 </div>
               </div>
@@ -696,6 +765,16 @@ export const AuthorityDashboard = () => {
                                 : "Create Water Log"}
                             </button>
                           </form>
+
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <button
+                              type="button"
+                              onClick={() => setShowCancellationModal(true)}
+                              className="w-full py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200 transition shadow-sm"
+                            >
+                              🚫 Request Task Cancellation
+                            </button>
+                          </div>
                         </>
                       )}
                     </>
@@ -705,7 +784,139 @@ export const AuthorityDashboard = () => {
             )}
           </div>
         )}
+
+        {/* Cancelled Tab */}
+        {isCancelledTab && (
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Cancelled Tasks
+            </h2>
+
+            {tasksError && (
+              <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {tasksError}
+              </div>
+            )}
+
+            {tasksLoading ? (
+              <div className="p-4 text-gray-600">
+                Loading cancelled tasks...
+              </div>
+            ) : cancelledTasks.length === 0 ? (
+              <div className="p-6 rounded-lg bg-gray-50 text-gray-600 text-sm">
+                No cancelled tasks.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {cancelledTasks.map((task) => {
+                  const report = task.reportId;
+                  return (
+                    <div
+                      key={task._id}
+                      className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-gray-900 truncate">
+                            {report?.title || "Untitled report"}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Report Status: {report?.status || "Unverified"}
+                          </p>
+
+                          {task.cancelledByRole === "authority" ? (
+                            <div className="mt-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+                              <p className="text-xs font-semibold text-yellow-900 mb-1">
+                                📋 Cancelled by You
+                              </p>
+                              {task.cancellationReason && (
+                                <p className="text-sm text-yellow-800">
+                                  <span className="font-semibold">Reason:</span>{" "}
+                                  {task.cancellationReason}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200">
+                              <p className="text-xs font-semibold text-red-900 mb-1">
+                                ⛔ Cancelled by Admin
+                              </p>
+                              {task.cancellationReason && (
+                                <p className="text-sm text-red-800">
+                                  <span className="font-semibold">Reason:</span>{" "}
+                                  {task.cancellationReason}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          <p className="text-xs text-gray-500 mt-3">
+                            Cancelled on:{" "}
+                            {task.cancelledAt
+                              ? new Date(task.cancelledAt).toLocaleDateString()
+                              : task.updatedAt
+                                ? new Date(task.updatedAt).toLocaleDateString()
+                                : "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Cancellation Modal */}
+      {showCancellationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
+              🚫 Request Task Cancellation
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Provide a reason for canceling this task. The admin will review
+              your request and reassign the task if necessary.
+            </p>
+
+            <textarea
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 mb-4 resize-none"
+              rows="4"
+              placeholder="e.g., The contamination issue has been resolved locally, unable to continue investigation..."
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+            />
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCancellationModal(false);
+                  setCancellationReason("");
+                }}
+                className="flex-1 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelTask}
+                disabled={
+                  !cancellationReason.trim() ||
+                  cancellingTaskId === selectedTaskId
+                }
+                className="flex-1 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {cancellingTaskId === selectedTaskId
+                  ? "Submitting..."
+                  : "Confirm Cancellation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
