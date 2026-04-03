@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import taskApi from "../../services/taskApi";
 import waterLogApi from "../../services/waterLogApi";
 import { StatusBadge } from "../../components/reports/StatusBadge";
+import SafeZoneList from "../../components/reports/SafeZoneList";
 
 export const AuthorityDashboard = () => {
   const { user, logout } = useAuth();
@@ -280,6 +281,16 @@ export const AuthorityDashboard = () => {
             }`}
           >
             Cancelled
+          </button>
+          <button
+            onClick={() => setActiveTab("safe-zones")}
+            className={`px-6 py-2 rounded-lg font-semibold transition ${
+              activeTab === "safe-zones"
+                ? "bg-green-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Safe Zones
           </button>
         </div>
 
@@ -865,6 +876,19 @@ export const AuthorityDashboard = () => {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Safe Zones Tab */}
+        {activeTab === "safe-zones" && (
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Safe Water Zones
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Manage safe water sources in your district. Create new zones to document clean water access points, or monitor all available zones.
+            </p>
+            <SafeZoneList mode="authority" />
           </div>
         )}
       </div>

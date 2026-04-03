@@ -9,6 +9,12 @@ const safeZoneApi = {
     return response.data;
   },
 
+  // Get safe zones created by the logged-in user
+  getMyCreatedSafeZones: async () => {
+    const response = await axios.get(`${API_BASE_URL}/my-zones`);
+    return response.data;
+  },
+
   // Get safe zones nearby a location
   getNearbySafeZones: async (lat, lng, maxDistance = 10000, limit = 5) => {
     const response = await axios.get(`${API_BASE_URL}/nearby`, {

@@ -1,10 +1,23 @@
 import React, { useEffect, useState, useMemo } from "react";
 import safeZoneApi from "../../services/safeZoneApi";
+import SafeZonesMap from "./SafeZonesMap";
 
-const SafeZoneList = () => {
+const SafeZoneList = ({ mode = "admin" }) => {
+  // Main zones list (admin: all zones, authority: my zones)
   const [safeZones, setSafeZones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // For authority mode: all zones (read-only)
+  const [allSafeZones, setAllSafeZones] = useState([]);
+  const [allZonesLoading, setAllZonesLoading] = useState(false);
+  const [allZonesError, setAllZonesError] = useState("");
+
+  // Active tab for authority mode
+  const [activeTab, setActiveTab] = useState("my-zones"); // my-zones | all-zones
+
+  // View mode for list/map toggle
+  const [viewMode, setViewMode] = useState("list"); // list | map
 
   // Form states
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -47,7 +60,12 @@ const SafeZoneList = () => {
     setLoading(true);
     setError("");
     try {
-      const data = await safeZoneApi.getAllSafeZones();
+      // Use getMyCreatedSafeZones for authority mode, getAllSafeZones for admin
+      const endpoint =
+        mode === "authority"
+          ? safeZoneApi.getMyCreatedSafeZones()
+          : safeZoneApi.getAllSafeZones();
+      const data = await endpoint;
       setSafeZones(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to load safe zones");
@@ -57,9 +75,29 @@ const SafeZoneList = () => {
     }
   };
 
+  const refreshAllSafeZones = async () => {
+    if (mode !== "authority") return; // Only fetch for authority mode
+    setAllZonesLoading(true);
+    setAllZonesError("");
+    try {
+      const data = await safeZoneApi.getAllSafeZones();
+      setAllSafeZones(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setAllZonesError(
+        err?.response?.data?.message || "Failed to load all safe zones"
+      );
+      setAllSafeZones([]);
+    } finally {
+      setAllZonesLoading(false);
+    }
+  };
+
   useEffect(() => {
     refreshSafeZones();
-  }, []);
+    if (mode === "authority") {
+      refreshAllSafeZones();
+    }
+  }, [mode]);
 
   const filteredSafeZones = useMemo(() => {
     return safeZones.filter((zone) => {
@@ -187,8 +225,60 @@ const SafeZoneList = () => {
 
   return (
     <div className="space-y-6">
-      {/* Create/Edit Form */}
-      {showCreateForm && (
+      {/* Authority Mode: Tabs */}
+      {mode === "authority" && (
+        <div className="flex gap-2 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("my-zones")}
+            className={`px-4 py-3 font-semibold transition ${
+              activeTab === "my-zones"
+                ? "border-b-2 border-[#00569c] text-[#00569c]"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            My Safe Zones
+          </button>
+          <button
+            onClick={() => setActiveTab("all-zones")}
+            className={`px-4 py-3 font-semibold transition ${
+              activeTab === "all-zones"
+                ? "border-b-2 border-[#00569c] text-[#00569c]"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            All Safe Zones
+          </button>
+        </div>
+      )}
+
+      {/* View Mode Toggle - For All Zones tab (Authority only) */}
+      {mode === "authority" && activeTab === "all-zones" && (
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setViewMode("list")}
+            className={`px-4 py-2 rounded-lg font-semibold transition ${
+              viewMode === "list"
+                ? "bg-[#00569c] text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+          >
+            📋 List View
+          </button>
+          <button
+            onClick={() => setViewMode("map")}
+            className={`px-4 py-2 rounded-lg font-semibold transition ${
+              viewMode === "map"
+                ? "bg-[#00569c] text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+          >
+            🗺️ Map View
+          </button>
+        </div>
+      )}
+
+      {/* Create/Edit Form - Only shown in My Zones tab or admin view */}
+      {(mode === "admin" || activeTab === "my-zones") && showCreateForm && (
         <div className="p-6 bg-blue-50 border border-blue-200 rounded-xl">
           <h4 className="text-lg font-bold text-[#00569c] mb-4">
             {editingZoneId ? "Edit Safe Zone" : "Create New Safe Zone"}
@@ -343,60 +433,91 @@ const SafeZoneList = () => {
         </div>
       )}
 
-      {/* Filters and Create Button */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
-        <div className="flex-1">
-          <label className="block mb-2 text-sm font-semibold text-gray-700">
-            Search
-          </label>
-          <input
-            className="input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Zone name, address, creator..."
-          />
-        </div>
-        <div>
-          <label className="block mb-2 text-sm font-semibold text-gray-700">
-            Type
-          </label>
-          <select
-            className="input"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+      {/* Filters and Create Button - Only shown in My Zones or admin view */}
+      {(mode === "admin" || activeTab === "my-zones") && (
+        <>
+          {/* View Mode Toggle */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-4 py-2 rounded-lg font-semibold transition ${
+                viewMode === "list"
+                  ? "bg-[#00569c] text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+            >
+              📋 List View
+            </button>
+            <button
+              onClick={() => setViewMode("map")}
+              className={`px-4 py-2 rounded-lg font-semibold transition ${
+                viewMode === "map"
+                  ? "bg-[#00569c] text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+            >
+              🗺️ Map View
+            </button>
+          </div>
+
+          {/* Filters and Create Button - Only shown in List View */}
+          {viewMode === "list" && (
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
+              <div className="flex-1">
+                <label className="block mb-2 text-sm font-semibold text-gray-700">
+                  Search
+                </label>
+                <input
+                  className="input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Zone name, address, creator..."
+            />
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-semibold text-gray-700">
+              Type
+            </label>
+            <select
+              className="input"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="all">All Types</option>
+              {safeZoneTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-2 text-sm font-semibold text-gray-700">
+              Availability
+            </label>
+            <select
+              className="input"
+              value={availabilityFilter}
+              onChange={(e) => setAvailabilityFilter(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="available">Available</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </div>
+          <button
+            onClick={() => {
+              setShowCreateForm(!showCreateForm);
+              setEditingZoneId(null);
+            }}
+            className="px-6 py-2 bg-[#00569c] text-white rounded-lg hover:bg-[#003f73] transition whitespace-nowrap"
           >
-            <option value="all">All Types</option>
-            {safeZoneTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block mb-2 text-sm font-semibold text-gray-700">
-            Availability
-          </label>
-          <select
-            className="input"
-            value={availabilityFilter}
-            onChange={(e) => setAvailabilityFilter(e.target.value)}
-          >
-            <option value="all">All</option>
-            <option value="available">Available</option>
-            <option value="unavailable">Unavailable</option>
-          </select>
-        </div>
-        <button
-          onClick={() => {
-            setShowCreateForm(!showCreateForm);
-            setEditingZoneId(null);
-          }}
-          className="px-6 py-2 bg-[#00569c] text-white rounded-lg hover:bg-[#003f73] transition whitespace-nowrap"
-        >
-          {showCreateForm ? "Cancel" : "+ New Zone"}
-        </button>
-      </div>
+            {showCreateForm ? "Cancel" : "+ New Zone"}
+          </button>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Weather Modal */}
       {weatherData && (
@@ -482,111 +603,96 @@ const SafeZoneList = () => {
         </div>
       )}
 
-      {/* Safe Zones List */}
-      <div className="p-6 bg-white shadow rounded-xl">
-        {loading ? (
-          <p className="text-gray-600">Loading safe zones...</p>
-        ) : error ? (
-          <div className="p-4 rounded-lg bg-red-50 border border-red-200">
-            <p className="text-red-700">{error}</p>
-          </div>
-        ) : filteredSafeZones.length === 0 ? (
-          <p className="text-gray-600">
-            No safe zones found. Create one to get started.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {filteredSafeZones.map((zone) => (
-              <div
-                key={zone._id}
-                className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition"
-              >
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-gray-900 text-lg">
-                      {zone.name}
-                    </h4>
-                    <div className="mt-2 flex flex-wrap items-center gap-3">
-                      <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                        {zone.type}
-                      </span>
-                      <span
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                          zone.isAvailable
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {zone.isAvailable ? "Available" : "Unavailable"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Created</p>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {new Date(zone.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
+      {/* Safe Zones List - My Zones (editable) */}
+      {(mode === "admin" || activeTab === "my-zones") && viewMode === "list" && (
+        <div className="p-6 bg-white shadow rounded-xl">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            {mode === "admin" ? "All Safe Zones" : "My Safe Zones"}
+          </h3>
+          {loading ? (
+            <p className="text-gray-600">Loading safe zones...</p>
+          ) : error ? (
+            <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-red-700">{error}</p>
+            </div>
+          ) : filteredSafeZones.length === 0 ? (
+            <p className="text-gray-600">
+              {mode === "admin"
+                ? "No safe zones found."
+                : "You haven't created any safe zones yet."}
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {filteredSafeZones.map((zone) => (
+                <RenderZoneCard
+                  key={zone._id}
+                  zone={zone}
+                  mode={mode}
+                  onEdit={() => handleEditClick(zone)}
+                  onDelete={() => handleDelete(zone._id)}
+                  onCheckWeather={() => handleCheckWeather(zone._id)}
+                  isDeleting={deletingZoneId === zone._id}
+                  isCheckingWeather={
+                    weatherLoading && weatherZoneId === zone._id
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-                {zone.description && (
-                  <p className="text-sm text-gray-600 mb-3">
-                    {zone.description}
-                  </p>
-                )}
+      {/* Safe Zones Map - My Zones */}
+      {(mode === "admin" || activeTab === "my-zones") && viewMode === "map" && (
+        <div className="p-6 bg-white shadow rounded-xl">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            {mode === "admin" ? "All Safe Zones Map" : "My Safe Zones Map"}
+          </h3>
+          <SafeZonesMap />
+        </div>
+      )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-4">
-                  <div>
-                    <p className="text-gray-600">Address</p>
-                    <p className="font-semibold text-gray-900">
-                      {zone.address || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Coordinates</p>
-                    <p className="font-semibold text-gray-900">
-                      {zone.location.coordinates[1].toFixed(4)},{" "}
-                      {zone.location.coordinates[0].toFixed(4)}
-                    </p>
-                  </div>
-                </div>
+      {/* Safe Zones List - All Zones (read-only) for Authority */}
+      {mode === "authority" && activeTab === "all-zones" && viewMode === "list" && (
+        <div className="p-6 bg-white shadow rounded-xl">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            All Safe Zones (Read-Only)
+          </h3>
+          {allZonesLoading ? (
+            <p className="text-gray-600">Loading all safe zones...</p>
+          ) : allZonesError ? (
+            <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-red-700">{allZonesError}</p>
+            </div>
+          ) : allSafeZones.length === 0 ? (
+            <p className="text-gray-600">No safe zones available.</p>
+          ) : (
+            <div className="space-y-4">
+              {allSafeZones.map((zone) => (
+                <RenderZoneCard
+                  key={zone._id}
+                  zone={zone}
+                  mode="read-only"
+                  onCheckWeather={() => handleCheckWeather(zone._id)}
+                  isCheckingWeather={
+                    weatherLoading && weatherZoneId === zone._id
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-                <div className="text-xs text-gray-500 mb-4">
-                  Created by:{" "}
-                  <span className="font-semibold text-gray-700">
-                    {zone.createdBy?.firstName} {zone.createdBy?.lastName}
-                  </span>
-                </div>
-
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => handleCheckWeather(zone._id)}
-                    disabled={weatherLoading && weatherZoneId === zone._id}
-                    className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition disabled:opacity-60 text-sm"
-                  >
-                    {weatherLoading && weatherZoneId === zone._id
-                      ? "Loading..."
-                      : "🌤️ Check Weather"}
-                  </button>
-                  <button
-                    onClick={() => handleEditClick(zone)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(zone._id)}
-                    disabled={deletingZoneId === zone._id}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-60 text-sm"
-                  >
-                    {deletingZoneId === zone._id ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Safe Zones Map - All Zones (read-only) for Authority */}
+      {mode === "authority" && activeTab === "all-zones" && viewMode === "map" && (
+        <div className="p-6 bg-white shadow rounded-xl">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            All Safe Zones Map (Read-Only)
+          </h3>
+          <SafeZonesMap />
+        </div>
+      )}
 
       <style jsx>{`
         .input {
@@ -602,6 +708,104 @@ const SafeZoneList = () => {
           box-shadow: 0 0 0 2px rgba(0, 86, 156, 0.2);
         }
       `}</style>
+    </div>
+  );
+};
+
+// Helper component to render a zone card with conditional actions
+const RenderZoneCard = ({
+  zone,
+  mode,
+  onEdit,
+  onDelete,
+  onCheckWeather,
+  isDeleting,
+  isCheckingWeather,
+}) => {
+  const isReadOnly = mode === "read-only";
+  const isEditable = mode === "admin" || mode === "authority";
+
+  return (
+    <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition">
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div className="min-w-0 flex-1">
+          <h4 className="font-bold text-gray-900 text-lg">{zone.name}</h4>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+              {zone.type}
+            </span>
+            <span
+              className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                zone.isAvailable
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {zone.isAvailable ? "Available" : "Unavailable"}
+            </span>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-gray-500">Created</p>
+          <p className="text-sm font-semibold text-gray-900">
+            {new Date(zone.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+
+      {zone.description && (
+        <p className="text-sm text-gray-600 mb-3">{zone.description}</p>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-4">
+        <div>
+          <p className="text-gray-600">Address</p>
+          <p className="font-semibold text-gray-900">{zone.address || "N/A"}</p>
+        </div>
+        <div>
+          <p className="text-gray-600">Coordinates</p>
+          <p className="font-semibold text-gray-900">
+            {zone.location.coordinates[1].toFixed(4)},{" "}
+            {zone.location.coordinates[0].toFixed(4)}
+          </p>
+        </div>
+      </div>
+
+      {!isReadOnly && (
+        <div className="text-xs text-gray-500 mb-4">
+          Created by:{" "}
+          <span className="font-semibold text-gray-700">
+            {zone.createdBy?.firstName} {zone.createdBy?.lastName}
+          </span>
+        </div>
+      )}
+
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={onCheckWeather}
+          disabled={isCheckingWeather}
+          className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition disabled:opacity-60 text-sm"
+        >
+          {isCheckingWeather ? "Loading..." : "🌤️ Check Weather"}
+        </button>
+        {isEditable && !isReadOnly && (
+          <>
+            <button
+              onClick={onEdit}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm"
+            >
+              Edit
+            </button>
+            <button
+              onClick={onDelete}
+              disabled={isDeleting}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-60 text-sm"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 };
