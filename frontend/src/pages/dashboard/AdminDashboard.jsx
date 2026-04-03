@@ -792,20 +792,7 @@ export const AdminDashboard = () => {
         )}
       </div>
 
-      <style jsx>{`
-        .input {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          outline: none;
-          transition: 0.3s;
-        }
-        .input:focus {
-          border-color: #00569c;
-          box-shadow: 0 0 0 2px rgba(0, 86, 156, 0.2);
-        }
-      `}</style>
+
     </div>
   );
 };

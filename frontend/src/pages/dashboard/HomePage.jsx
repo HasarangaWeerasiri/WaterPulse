@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import CitizenSafeZoneView from '../../components/reports/CitizenSafeZoneView'
 import {
   FileText, CheckCircle, Clock, AlertTriangle,
   FilePlus, Map, Bell, User
@@ -404,6 +405,16 @@ export function HomePage() {
                       <div key={l} className="leg"><div className="leg-dot" style={{background:c}}/>{l}</div>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Safe Zones */}
+              <div>
+                <div className="sec-head">
+                  <span className="sec-title"><span className="sec-bar"/>Safe Zones</span>
+                </div>
+                <div className="card" style={{ animationDelay:'.4s', padding: 0, overflow: 'hidden' }}>
+                  <CitizenSafeZoneView />
                 </div>
               </div>
             </div>

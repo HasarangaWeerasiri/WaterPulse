@@ -37,10 +37,10 @@ const SafeZoneList = ({ mode = "admin" }) => {
   // Delete states
   const [deletingZoneId, setDeletingZoneId] = useState("");
 
-  // Weather states
-  const [weatherZoneId, setWeatherZoneId] = useState(null);
-  const [weatherData, setWeatherData] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
+  // Weather states - for inline expansion
+  const [expandedZoneId, setExpandedZoneId] = useState(null);
+  const [zoneWeatherData, setZoneWeatherData] = useState({});
+  const [loadingWeatherId, setLoadingWeatherId] = useState(null);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -210,16 +210,31 @@ const SafeZoneList = ({ mode = "admin" }) => {
   };
 
   const handleCheckWeather = async (zoneId) => {
-    setWeatherZoneId(zoneId);
-    setWeatherLoading(true);
-    setWeatherData(null);
+    // If already expanded, collapse it
+    if (expandedZoneId === zoneId) {
+      setExpandedZoneId(null);
+      return;
+    }
+
+    // If weather data already exists, just toggle expansion
+    if (zoneWeatherData[zoneId]) {
+      setExpandedZoneId(zoneId);
+      return;
+    }
+
+    // Otherwise fetch weather data
+    setLoadingWeatherId(zoneId);
     try {
       const data = await safeZoneApi.getSafeZoneWeather(zoneId);
-      setWeatherData(data);
+      setZoneWeatherData((prev) => ({
+        ...prev,
+        [zoneId]: data,
+      }));
+      setExpandedZoneId(zoneId);
     } catch (err) {
       console.error("Weather fetch failed:", err);
     } finally {
-      setWeatherLoading(false);
+      setLoadingWeatherId(null);
     }
   };
 
@@ -519,90 +534,6 @@ const SafeZoneList = ({ mode = "admin" }) => {
         </>
       )}
 
-      {/* Weather Modal */}
-      {weatherData && (
-        <div className="p-6 bg-gradient-to-r from-blue-50 to-amber-50 border-2 border-blue-300 rounded-xl">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h4 className="text-lg font-bold text-[#00569c]">
-                {weatherData.safeZone.name} - Weather & Risk Assessment
-              </h4>
-              <p className="text-sm text-gray-600">
-                Type: {weatherData.safeZone.type}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setWeatherZoneId(null);
-                setWeatherData(null);
-              }}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Weather Info */}
-            <div>
-              <h5 className="font-semibold text-gray-800 mb-3">
-                Current Weather
-              </h5>
-              <div className="space-y-2 text-sm">
-                <p>
-                  <span className="font-semibold">Condition:</span>{" "}
-                  {weatherData.weather.condition} (
-                  {weatherData.weather.description})
-                </p>
-                <p>
-                  <span className="font-semibold">Temperature:</span>{" "}
-                  {weatherData.weather.temperature}°C
-                </p>
-                <p>
-                  <span className="font-semibold">Humidity:</span>{" "}
-                  {weatherData.weather.humidity}%
-                </p>
-                <p>
-                  <span className="font-semibold">Wind Speed:</span>{" "}
-                  {weatherData.weather.windSpeed} m/s
-                </p>
-              </div>
-            </div>
-
-            {/* Contamination Risk */}
-            <div>
-              <h5 className="font-semibold text-gray-800 mb-3">
-                Contamination Risk
-              </h5>
-              <div
-                className={`p-4 rounded-lg ${
-                  weatherData.contamination.riskLevel === "High"
-                    ? "bg-red-100 border border-red-300"
-                    : weatherData.contamination.riskLevel === "Medium"
-                      ? "bg-amber-100 border border-amber-300"
-                      : "bg-green-100 border border-green-300"
-                }`}
-              >
-                <p
-                  className={`font-bold text-lg mb-2 ${
-                    weatherData.contamination.riskLevel === "High"
-                      ? "text-red-700"
-                      : weatherData.contamination.riskLevel === "Medium"
-                        ? "text-amber-700"
-                        : "text-green-700"
-                  }`}
-                >
-                  Risk Level: {weatherData.contamination.riskLevel}
-                </p>
-                <p className="text-sm text-gray-700">
-                  {weatherData.contamination.riskMessage}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Safe Zones List - My Zones (editable) */}
       {(mode === "admin" || activeTab === "my-zones") && viewMode === "list" && (
         <div className="p-6 bg-white shadow rounded-xl">
@@ -632,9 +563,9 @@ const SafeZoneList = ({ mode = "admin" }) => {
                   onDelete={() => handleDelete(zone._id)}
                   onCheckWeather={() => handleCheckWeather(zone._id)}
                   isDeleting={deletingZoneId === zone._id}
-                  isCheckingWeather={
-                    weatherLoading && weatherZoneId === zone._id
-                  }
+                  isCheckingWeather={loadingWeatherId === zone._id}
+                  isExpanded={expandedZoneId === zone._id}
+                  weatherData={zoneWeatherData[zone._id]}
                 />
               ))}
             </div>
@@ -674,9 +605,9 @@ const SafeZoneList = ({ mode = "admin" }) => {
                   zone={zone}
                   mode="read-only"
                   onCheckWeather={() => handleCheckWeather(zone._id)}
-                  isCheckingWeather={
-                    weatherLoading && weatherZoneId === zone._id
-                  }
+                  isCheckingWeather={loadingWeatherId === zone._id}
+                  isExpanded={expandedZoneId === zone._id}
+                  weatherData={zoneWeatherData[zone._id]}
                 />
               ))}
             </div>
@@ -694,20 +625,7 @@ const SafeZoneList = ({ mode = "admin" }) => {
         </div>
       )}
 
-      <style jsx>{`
-        .input {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          outline: none;
-          transition: 0.3s;
-        }
-        .input:focus {
-          border-color: #00569c;
-          box-shadow: 0 0 0 2px rgba(0, 86, 156, 0.2);
-        }
-      `}</style>
+
     </div>
   );
 };
@@ -721,6 +639,8 @@ const RenderZoneCard = ({
   onCheckWeather,
   isDeleting,
   isCheckingWeather,
+  isExpanded,
+  weatherData,
 }) => {
   const isReadOnly = mode === "read-only";
   const isEditable = mode === "admin" || mode === "authority";
@@ -786,7 +706,11 @@ const RenderZoneCard = ({
           disabled={isCheckingWeather}
           className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition disabled:opacity-60 text-sm"
         >
-          {isCheckingWeather ? "Loading..." : "🌤️ Check Weather"}
+          {isCheckingWeather
+            ? "Loading..."
+            : isExpanded
+            ? "🌤️ Hide Weather"
+            : "🌤️ Check Weather"}
         </button>
         {isEditable && !isReadOnly && (
           <>
@@ -806,6 +730,87 @@ const RenderZoneCard = ({
           </>
         )}
       </div>
+
+      {/* Weather Details Section - Shows when expanded */}
+      {isExpanded && weatherData && (
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            {/* Current Weather Section */}
+            <div>
+              <h4 className="text-lg font-bold text-gray-800 mb-4">
+                Current Weather
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Temperature</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {weatherData.weather?.temperature || "N/A"}°C
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Humidity</p>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
+                    <div
+                      className="h-2 rounded-full bg-blue-500"
+                      style={{
+                        width: `${Math.min(
+                          weatherData.weather?.humidity || 0,
+                          100
+                        )}%`,
+                      }}
+                    ></div>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700">
+                    {weatherData.weather?.humidity || 0}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Conditions</p>
+                  <p className="font-semibold text-gray-800 capitalize">
+                    {weatherData.weather?.description || "N/A"}
+                  </p>
+                </div>
+                {weatherData.weather?.windSpeed && (
+                  <div>
+                    <p className="text-sm text-gray-600">Wind Speed</p>
+                    <p className="font-semibold text-gray-800">
+                      {weatherData.weather.windSpeed} m/s
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Contamination Risk Section */}
+            <div>
+              <h4 className="text-lg font-bold text-gray-800 mb-4">
+                Contamination Risk
+              </h4>
+              <div
+                className={`text-center py-4 rounded-lg mb-4 ${
+                  weatherData.contamination?.riskLevel === "High"
+                    ? "bg-red-100 text-red-700"
+                    : weatherData.contamination?.riskLevel === "Medium"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-green-100 text-green-700"
+                }`}
+              >
+                <p className="text-lg font-bold">
+                  {weatherData.contamination?.riskLevel || "Unknown"}
+                </p>
+              </div>
+              {weatherData.contamination?.riskMessage && (
+                <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <p className="text-xs text-blue-800">
+                    <span className="font-semibold">💡 Note:</span>{" "}
+                    {weatherData.contamination?.riskMessage}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
