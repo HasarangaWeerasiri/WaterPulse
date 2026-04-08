@@ -11,6 +11,12 @@ export const reportApi = {
     return response.data;
   },
 
+  // Admin & authority: fetch reports that are waiting to be actioned
+  async getPendingReports() {
+    const response = await axios.get(REPORT_API_BASE_URL + '/pending');
+    return response.data;
+  },
+
   async getMyReports() {
     const response = await axios.get(REPORT_API_BASE_URL + '/my-reports');
     return response.data;

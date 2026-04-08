@@ -12,7 +12,16 @@ const getStatusStyles = (status = '') => {
     return 'bg-blue-100 text-blue-800';
   }
   if (normalized === 'confirmed') {
-    return 'bg-green-100 text-green-800';
+    // Confirmed = unsafe to use => red
+    return 'bg-red-100 text-red-800';
+  }
+
+  if (normalized === 'resolved') {
+    return 'bg-emerald-100 text-emerald-800';
+  }
+
+  if (normalized === 'spam') {
+    return 'bg-red-100 text-red-800';
   }
 
   // default / unknown
