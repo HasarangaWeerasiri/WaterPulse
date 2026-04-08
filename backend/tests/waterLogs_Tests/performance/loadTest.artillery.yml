@@ -1,0 +1,85 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 10
+      name: "Ramp up"
+    - duration: 60
+      arrivalRate: 20
+      name: "Sustained load"
+    - duration: 30
+      arrivalRate: 5
+      name: "Cool down"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2MDAwMDAwMDAwMDAwMDAwMDAwMDAwMSIsImlhdCI6MTcxNDAwMDAwMH0.test_token_for_load_testing"
+  processor: "./loadTestProcessor.js"
+  variables:
+    pH: 7.0
+    turbidity: 3.0
+    region: "Downtown"
+    reportId: "660000000000000000000001"
+
+scenarios:
+  - name: "Water Log API Load Test"
+    flow:
+      - post:
+          url: "/api/logs"
+          json:
+            phLevel: "{{ $randomNumber(6.0, 8.5) }}"
+            turbidity: "{{ $randomNumber(2, 5) }}"
+            region: "{{ region }}"
+            contaminants: ["Lead", "Bacteria"]
+            reportId: "{{ reportId }}"
+      - think: 2
+      - get:
+          url: "/api/logs"
+      - think: 1
+      - get:
+          url: "/api/logs/region/Downtown"
+      - think: 1
+      - get:
+          url: "/api/logs?safetyRating=Safe"
+
+  - name: "Water Log Filtering Load Test"
+    weight: 2
+    flow:
+      - get:
+          url: "/api/logs"
+      - think: 1
+      - get:
+          url: "/api/logs?region=Downtown"
+      - think: 1
+      - get:
+          url: "/api/logs?safetyRating=Unsafe"
+      - think: 1
+      - get:
+          url: "/api/logs?region=Park+Avenue&safetyRating=Safe"
+
+  - name: "Water Log Update Load Test"
+    weight: 1
+    flow:
+      - post:
+          url: "/api/logs"
+          json:
+            phLevel: 7.2
+            turbidity: 4.0
+            region: "Test Region"
+            contaminants: ["Chlorine"]
+            reportId: "660000000000000000000001"
+          capture:
+            - json: "$.id"
+              as: "logId"
+      - think: 2
+      - patch:
+          url: "/api/logs/{{ logId }}"
+          json:
+            phLevel: 7.5
+            turbidity: 3.5
+      - think: 1
+      - delete:
+          url: "/api/logs/{{ logId }}"

@@ -6,7 +6,17 @@
   "type": "module",
   "scripts": {
     "start": "nodemon server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "test": "jest",
+    "test:waterlog": "jest tests/waterLogs_Tests",
+    "test:waterlog:unit": "jest tests/waterLogs_Tests/unit",
+    "test:waterlog:integration": "jest tests/waterLogs_Tests/integration",
+    "test:waterlog:watch": "jest tests/waterLogs_Tests --watch",
+    "test:waterlog:coverage": "jest tests/waterLogs_Tests --coverage",
+    "perf:waterlog:load": "artillery run tests/waterLogs_Tests/performance/loadTest.artillery.yml",
+    "perf:waterlog:benchmark": "node tests/waterLogs_Tests/performance/benchmarks.js",
+    "perf:waterlog:memory": "node tests/waterLogs_Tests/performance/memoryProfile.js",
+    "perf:waterlog:all": "npm run perf:waterlog:benchmark && npm run perf:waterlog:memory"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +33,13 @@
     "resend": "^6.9.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "jest": "^29.5.0",
+    "@babel/preset-env": "^7.22.0",
+    "@babel/core": "^7.22.0",
+    "babel-jest": "^29.5.0",
+    "supertest": "^6.3.3",
+    "artillery": "^2.0.0",
+    "autocannon": "^7.10.0"
   }
 }
