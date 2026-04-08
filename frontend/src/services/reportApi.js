@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_URLS } from '../config/api.js';
 
 // Base URL for contamination report APIs
-const REPORT_API_BASE_URL = 'http://localhost:5000/api/reports';
+const REPORT_API_BASE_URL = API_URLS.reports;
 
 // Single-responsibility API wrapper for contamination reports
 // This keeps networking concerns separate from UI components (SRP / DIP).

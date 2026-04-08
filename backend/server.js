@@ -12,8 +12,22 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-app.use(cors({ origin: ["http://localhost:5173", "http://localhost:5174"], credentials: true }));
+// Dynamic CORS configuration
+const getCorsOrigin = () => {
+  if (NODE_ENV === 'production') {
+    return [
+      'https://water-pulse-gamma.vercel.app',
+      'https://www.water-pulse-gamma.vercel.app',
+      process.env.CORS_ORIGIN // Allow additional origins via env variable
+    ].filter(Boolean);
+  }
+  // Development: allow localhost
+  return ["http://localhost:5173", "http://localhost:5174"];
+};
+
+app.use(cors({ origin: getCorsOrigin(), credentials: true }));
 app.use(express.json());
 
 // Auth routes

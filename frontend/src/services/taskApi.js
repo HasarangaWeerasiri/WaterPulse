@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API_URLS } from '../config/api.js';
 
-const TASK_API_BASE_URL = 'http://localhost:5000/api/tasks';
+const TASK_API_BASE_URL = API_URLS.tasks;
 
 // Task API wrapper for admin and authority users
 // Handles all task-related API operations

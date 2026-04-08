@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API_URLS } from '../config/api.js';
 
-const WATER_LOG_API_BASE_URL = 'http://localhost:5000/api/logs';
+const WATER_LOG_API_BASE_URL = API_URLS.waterLogs;
 
 // WaterLog API wrapper used to create/update water quality logs.
 export const waterLogApi = {

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URLS } from "../../config/api.js";
 import AdminReportList from "../../components/reports/AdminReportList";
 import AdminReportsMap from "../../components/reports/AdminReportsMap";
 import AdminTaskDashboard from "./AdminTaskDashboard";
@@ -78,7 +79,7 @@ export const AdminDashboard = () => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/create-admin-authority",
+        `${API_URLS.auth}/create-admin-authority`,
         formData,
       );
       setMessage(
@@ -425,11 +426,7 @@ export const AdminDashboard = () => {
             onClick={() => setSidebarOpen((prev) => !prev)}
             className="inline-flex items-center justify-center p-2 transition rounded-lg hover:bg-gray-100"
           >
-            <img
-              src="/menuBlack.png"
-              alt="Menu"
-              className="w-6 h-6"
-            />
+            <img src="/menuBlack.png" alt="Menu" className="w-6 h-6" />
           </button>
         </div>
 
@@ -792,8 +789,6 @@ export const AdminDashboard = () => {
           </div>
         )}
       </div>
-
-
     </div>
   );
 };

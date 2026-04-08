@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_URLS } from '../config/api.js';
 
-const API_BASE_URL = "http://localhost:5000/api/safe-zones";
+const API_BASE_URL = API_URLS.safeZones;
 
 const safeZoneApi = {
   // Get all safe zones
