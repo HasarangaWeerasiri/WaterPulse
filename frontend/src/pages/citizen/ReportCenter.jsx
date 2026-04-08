@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ReportLayout } from '../../components/reports/ReportLayout';
 import { ReportForm } from '../../components/reports/ReportForm';
 import { ReportList } from '../../components/reports/ReportList';
+import WaterLogsAnalytics from '../../components/reports/WaterLogsAnalytics';
 
 // ReportCenter page: high-level composition/root for citizen contamination reports.
 // SRP: orchestrates report form + list within a themed layout.
@@ -9,6 +10,7 @@ import { ReportList } from '../../components/reports/ReportList';
 export const ReportCenter = () => {
   const [editingReport, setEditingReport] = useState(null);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [activeTab, setActiveTab] = useState("reports");
 
   const handleEditReport = (report) => {
     if (report.status !== 'Unverified') return;
@@ -34,14 +36,47 @@ export const ReportCenter = () => {
         </span>
       }
     >
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ReportForm
-          editingReport={editingReport}
-          onEditCompleted={handleEditCompleted}
-          onCreated={handleCreated}
-        />
-        <ReportList onEdit={handleEditReport} refreshToken={refreshToken} />
+      {/* Tabs */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => setActiveTab("reports")}
+          className={`px-6 py-2 rounded-lg font-semibold transition ${
+            activeTab === "reports"
+              ? "bg-[#2d8bba] text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          My Reports
+        </button>
+        <button
+          onClick={() => setActiveTab("analytics")}
+          className={`px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+            activeTab === "analytics"
+              ? "bg-[#2d8bba] text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          <img src="/google-analytics.png" alt="Analytics" className="w-5 h-5" />
+          Water Quality Analytics
+        </button>
       </div>
+
+      {/* Reports Tab */}
+      {activeTab === "reports" && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <ReportForm
+            editingReport={editingReport}
+            onEditCompleted={handleEditCompleted}
+            onCreated={handleCreated}
+          />
+          <ReportList onEdit={handleEditReport} refreshToken={refreshToken} />
+        </div>
+      )}
+
+      {/* Analytics Tab */}
+      {activeTab === "analytics" && (
+        <WaterLogsAnalytics />
+      )}
     </ReportLayout>
   );
 };
