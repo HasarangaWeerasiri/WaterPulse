@@ -210,20 +210,20 @@ export const AuthorityDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2a4a] to-[#0d3d6b] text-white">
       {/* Navbar */}
-      <nav className="bg-white shadow-lg">
+      <nav className="bg-gradient-to-r from-[#00569c] via-[#00457f] to-[#002d5f] shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-green-600">
+              <h1 className="text-2xl font-bold text-white">
                 WaterPulse Authority
               </h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-sm text-gray-600">Welcome,</p>
-                <p className="font-semibold text-gray-900">
+                <p className="text-sm text-white/80">Welcome,</p>
+                <p className="font-semibold text-white">
                   {user?.firstName} {user?.lastName}
                 </p>
               </div>
@@ -246,7 +246,7 @@ export const AuthorityDashboard = () => {
             onClick={() => setActiveTab("overview")}
             className={`px-6 py-2 rounded-lg font-semibold transition ${
               activeTab === "overview"
-                ? "bg-green-600 text-white"
+                ? "bg-[#2d8bba] text-white"
                 : "bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -256,7 +256,7 @@ export const AuthorityDashboard = () => {
             onClick={() => setActiveTab("manage")}
             className={`px-6 py-2 rounded-lg font-semibold transition ${
               activeTab === "manage"
-                ? "bg-green-600 text-white"
+                ? "bg-[#2d8bba] text-white"
                 : "bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -266,7 +266,7 @@ export const AuthorityDashboard = () => {
             onClick={() => setActiveTab("resolved")}
             className={`px-6 py-2 rounded-lg font-semibold transition ${
               activeTab === "resolved"
-                ? "bg-green-600 text-white"
+                ? "bg-[#2d8bba] text-white"
                 : "bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -276,7 +276,7 @@ export const AuthorityDashboard = () => {
             onClick={() => setActiveTab("cancelled")}
             className={`px-6 py-2 rounded-lg font-semibold transition ${
               activeTab === "cancelled"
-                ? "bg-green-600 text-white"
+                ? "bg-[#2d8bba] text-white"
                 : "bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -286,7 +286,7 @@ export const AuthorityDashboard = () => {
             onClick={() => setActiveTab("safe-zones")}
             className={`px-6 py-2 rounded-lg font-semibold transition ${
               activeTab === "safe-zones"
-                ? "bg-green-600 text-white"
+                ? "bg-[#2d8bba] text-white"
                 : "bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -364,7 +364,7 @@ export const AuthorityDashboard = () => {
                 <p className="text-gray-600 mb-4">
                   Schedule and track maintenance in your district
                 </p>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                <button className="px-4 py-2 bg-[#2d8bba] text-white rounded-lg hover:bg-[#3aa2cf] transition">
                   Schedule Maintenance
                 </button>
               </div>
@@ -375,7 +375,7 @@ export const AuthorityDashboard = () => {
                 <p className="text-gray-600 mb-4">
                   View water quality and usage reports
                 </p>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                <button className="px-4 py-2 bg-[#2d8bba] text-white rounded-lg hover:bg-[#3aa2cf] transition">
                   View Reports
                 </button>
               </div>
@@ -386,7 +386,7 @@ export const AuthorityDashboard = () => {
                 <p className="text-gray-600 mb-4">
                   Send alerts to citizens in your district
                 </p>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                <button className="px-4 py-2 bg-[#2d8bba] text-white rounded-lg hover:bg-[#3aa2cf] transition">
                   Send Alert
                 </button>
               </div>
@@ -397,7 +397,7 @@ export const AuthorityDashboard = () => {
                 <p className="text-gray-600 mb-4">
                   Review feedback from your region
                 </p>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                <button className="px-4 py-2 bg-[#2d8bba] text-white rounded-lg hover:bg-[#3aa2cf] transition">
                   View Feedback
                 </button>
               </div>
