@@ -16,9 +16,9 @@ export const createLog = async (req, res) => {
     const { region, reportId, phLevel, turbidity, contaminants } = req.body;
 
     // Validate required fields
-    if (!region || phLevel === undefined || turbidity === undefined) {
+    if (phLevel === undefined || turbidity === undefined) {
       return res.status(400).json({
-        message: "region, phLevel, and turbidity are required"
+        message: "phLevel and turbidity are required"
       });
     }
 

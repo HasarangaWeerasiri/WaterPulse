@@ -16,7 +16,7 @@ import { StatusBadge } from "../../components/reports/StatusBadge";
 export const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("reports");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -355,9 +355,8 @@ export const AdminDashboard = () => {
   };
 
   const tabs = [
-    "overview",
-    "create",
     "reports",
+    "create",
     "tasks",
     "safezones",
     "safezones-map",
@@ -433,20 +432,6 @@ export const AdminDashboard = () => {
             />
           </button>
         </div>
-
-        {activeTab === "overview" && (
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="p-6 transition bg-white shadow rounded-xl hover:shadow-lg">
-              System running smoothly
-            </div>
-            <div className="p-6 transition bg-white shadow rounded-xl hover:shadow-lg">
-              Active users online
-            </div>
-            <div className="p-6 transition bg-white shadow rounded-xl hover:shadow-lg">
-              Role: {user?.role}
-            </div>
-          </div>
-        )}
 
         {activeTab === "create" && (
           <div className="max-w-3xl p-8 bg-white shadow-xl rounded-xl">

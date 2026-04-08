@@ -5,6 +5,7 @@ import taskApi from "../../services/taskApi";
 import waterLogApi from "../../services/waterLogApi";
 import { StatusBadge } from "../../components/reports/StatusBadge";
 import SafeZoneList from "../../components/reports/SafeZoneList";
+import WaterLogsAnalytics from "../../components/reports/WaterLogsAnalytics";
 
 export const AuthorityDashboard = () => {
   const { user, logout } = useAuth();
@@ -74,9 +75,19 @@ export const AuthorityDashboard = () => {
     setLogsLoading(true);
     setLogsError("");
     try {
+      // Brief delay to ensure database has persisted the data
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      
       const data = await waterLogApi.getAllLogs();
       const logs = Array.isArray(data?.logs) ? data.logs : [];
-      const mine = logs.filter((l) => l?.recordedBy?._id === user._id);
+      
+      // Normalize IDs to strings for comparison
+      const mine = logs.filter((l) => {
+        const logUserId = l?.recordedBy?._id?.toString?.() || l?.recordedBy?._id;
+        const currentUserId = user._id?.toString?.() || user._id;
+        return logUserId === currentUserId;
+      });
+      
       setAuthorityWaterLogs(mine);
     } catch (err) {
       setLogsError(err?.response?.data?.message || "Failed to load water logs");
@@ -152,17 +163,44 @@ export const AuthorityDashboard = () => {
   }, [selectedTask]);
 
   const resolvedTasks = useMemo(() => {
-    return myTasks.filter((t) => t.reportId?.status === "Resolved");
+    const tasks = myTasks.filter((t) => t.reportId?.status === "Resolved");
+    // Deduplicate by reportId - keep only the first task for each report
+    const seenReportIds = new Set();
+    return tasks.filter((task) => {
+      if (seenReportIds.has(task.reportId?._id)) {
+        return false;
+      }
+      seenReportIds.add(task.reportId?._id);
+      return true;
+    });
   }, [myTasks]);
 
   const cancelledTasks = useMemo(() => {
-    return myTasks.filter((t) => t.status === "cancelled");
+    const tasks = myTasks.filter((t) => t.status === "cancelled");
+    // Deduplicate by reportId - keep only the first task for each report
+    const seenReportIds = new Set();
+    return tasks.filter((task) => {
+      if (seenReportIds.has(task.reportId?._id)) {
+        return false;
+      }
+      seenReportIds.add(task.reportId?._id);
+      return true;
+    });
   }, [myTasks]);
 
   const manageTasks = useMemo(() => {
-    return myTasks.filter(
+    const tasks = myTasks.filter(
       (t) => t.reportId?.status !== "Resolved" && t.status !== "cancelled",
     );
+    // Deduplicate by reportId - keep only the first task for each report
+    const seenReportIds = new Set();
+    return tasks.filter((task) => {
+      if (seenReportIds.has(task.reportId?._id)) {
+        return false;
+      }
+      seenReportIds.add(task.reportId?._id);
+      return true;
+    });
   }, [myTasks]);
 
   const isResolvedTab = activeTab === "resolved";
@@ -291,6 +329,17 @@ export const AuthorityDashboard = () => {
             }`}
           >
             Safe Zones
+          </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`px-6 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+              activeTab === "analytics"
+                ? "bg-[#2d8bba] text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <img src="/google-analytics.png" alt="Analytics" className="w-5 h-5" />
+            Analytics
           </button>
         </div>
 
@@ -657,8 +706,6 @@ export const AuthorityDashboard = () => {
 
                               if (!selectedTask.reportId?._id)
                                 return setLogError("Missing reportId");
-                              if (!region.trim())
-                                return setLogError("Region is required");
                               if (phLevel === "" || turbidity === "")
                                 return setLogError(
                                   "pH Level and Turbidity are required",
@@ -679,7 +726,6 @@ export const AuthorityDashboard = () => {
                               setCreatingLog(true);
                               try {
                                 await waterLogApi.createLog({
-                                  region: region.trim(),
                                   reportId: selectedTask.reportId._id,
                                   phLevel: ph,
                                   turbidity: turb,
@@ -705,34 +751,21 @@ export const AuthorityDashboard = () => {
                             }}
                             className="space-y-4"
                           >
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block mb-2 text-sm font-semibold text-gray-700">
-                                  Region
-                                </label>
-                                <input
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  value={region}
-                                  onChange={(e) => setRegion(e.target.value)}
-                                  placeholder="e.g., Colombo District"
-                                />
-                              </div>
-                              <div>
-                                <label className="block mb-2 text-sm font-semibold text-gray-700">
-                                  pH Level
-                                </label>
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  min="0"
-                                  max="14"
-                                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  value={phLevel}
-                                  onChange={(e) => setPhLevel(e.target.value)}
-                                  placeholder="0 - 14"
-                                  required
-                                />
-                              </div>
+                            <div>
+                              <label className="block mb-2 text-sm font-semibold text-gray-700">
+                                pH Level
+                              </label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="14"
+                                className="w-full px-4 py-2 text-gray-800 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={phLevel}
+                                onChange={(e) => setPhLevel(e.target.value)}
+                                placeholder="0 - 14"
+                                required
+                              />
                             </div>
 
                             <div>
@@ -743,7 +776,7 @@ export const AuthorityDashboard = () => {
                                 type="number"
                                 step="0.1"
                                 min="0"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-4 py-2 text-gray-800 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={turbidity}
                                 onChange={(e) => setTurbidity(e.target.value)}
                                 placeholder="e.g., 3.2"
@@ -757,7 +790,7 @@ export const AuthorityDashboard = () => {
                               </label>
                               <input
                                 type="text"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-4 py-2 text-gray-800 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={contaminantsText}
                                 onChange={(e) =>
                                   setContaminantsText(e.target.value)
@@ -891,6 +924,10 @@ export const AuthorityDashboard = () => {
             <SafeZoneList mode="authority" />
           </div>
         )}
+
+        {activeTab === "analytics" && (
+          <WaterLogsAnalytics region={user?.location?.district || user?.location?.city || null} />
+        )}
       </div>
 
       {/* Cancellation Modal */}
@@ -906,7 +943,7 @@ export const AuthorityDashboard = () => {
             </p>
 
             <textarea
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 mb-4 resize-none"
+              className="w-full px-4 py-2 text-gray-800 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 mb-4 resize-none"
               rows="4"
               placeholder="e.g., The contamination issue has been resolved locally, unable to continue investigation..."
               value={cancellationReason}
