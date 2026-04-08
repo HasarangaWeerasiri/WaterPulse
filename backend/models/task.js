@@ -66,11 +66,4 @@ taskSchema.index({ assignedTo: 1, status: 1 });
 taskSchema.index({ reportId: 1, status: 1 });
 taskSchema.index({ priority: 1, status: 1 });
 
-// Prevent duplicate active tasks for the same report
-// Only one active (non-cancelled) task per report is allowed
-taskSchema.index(
-  { reportId: 1, status: 1 },
-  { unique: false }
-);
-
 export default mongoose.model("Task", taskSchema);
