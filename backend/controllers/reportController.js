@@ -1,4 +1,6 @@
 import ContaminationReport from "../models/contaminationReport.js";
+import WaterLog from "../models/waterLog.js";
+import Task from "../models/task.js";
 import axios from "axios";
 import reportService from "../services/reportService.js";
 import reportPdfService from "../services/reportPdfService.js";
@@ -310,7 +312,8 @@ export const updateReportStatus = async (req, res) => {
 // - Admin/authority: can delete any report
 export const deleteReport = async (req, res) => {
   try {
-    const report = await ContaminationReport.findById(req.params.id);
+    const reportId = req.params.id;
+    const report = await ContaminationReport.findById(reportId);
 
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
@@ -321,11 +324,20 @@ export const deleteReport = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to delete this report" });
     }
 
-    // Optionally, you could also restrict other roles here if needed
+    // Delete all water logs associated with this report
+    const waterLogsDeleted = await WaterLog.deleteMany({ reportId });
 
+    // Delete all tasks associated with this report
+    const tasksDeleted = await Task.deleteMany({ reportId });
+
+    // Delete the report itself
     await report.deleteOne();
 
-    res.status(200).json({ message: "Report deleted successfully" });
+    res.status(200).json({
+      message: "Report and associated data deleted successfully",
+      deletedWaterLogs: waterLogsDeleted.deletedCount,
+      deletedTasks: tasksDeleted.deletedCount
+    });
 
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });

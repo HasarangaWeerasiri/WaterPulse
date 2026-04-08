@@ -160,9 +160,28 @@ export const getSafeZoneById = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────
+// @route   GET /api/safe-zones/my-zones
+// @access  Admin | Authority
+// @desc    Fetch safe zones created by the logged-in user
+// ─────────────────────────────────────────────
+export const getMyCreatedSafeZones = async (req, res) => {
+  try {
+    const safeZones = await SafeZone.find({ createdBy: req.userId })
+      .populate("createdBy", "firstName email role")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(safeZones);
+  } catch (error) {
+    console.error("getMyCreatedSafeZones error:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ─────────────────────────────────────────────
 // @route   PUT /api/safe-zones/:id
 // @access  Admin | Authority
 // @desc    Update safe zone details or availability
+//          Authority can only edit their own zones
 // ─────────────────────────────────────────────
 export const updateSafeZone = async (req, res) => {
   try {
@@ -173,6 +192,11 @@ export const updateSafeZone = async (req, res) => {
 
     if (!safeZone) {
       return res.status(404).json({ message: "Safe zone not found" });
+    }
+
+    // Ownership check: Allow if user is admin or creator
+    if (req.userRole !== "admin" && safeZone.createdBy.toString() !== req.userId) {
+      return res.status(403).json({ message: "You can only edit safe zones you created" });
     }
 
     // Update scalar fields if provided
@@ -302,14 +326,22 @@ export const getSafeZoneWeather = async (req, res) => {
 // @route   DELETE /api/safe-zones/:id
 // @access  Admin | Authority
 // @desc    Permanently remove a safe zone
+//          Authority can only delete their own zones
 // ─────────────────────────────────────────────
 export const deleteSafeZone = async (req, res) => {
   try {
-    const safeZone = await SafeZone.findByIdAndDelete(req.params.id);
+    const safeZone = await SafeZone.findById(req.params.id);
 
     if (!safeZone) {
       return res.status(404).json({ message: "Safe zone not found" });
     }
+
+    // Ownership check: Allow if user is admin or creator
+    if (req.userRole !== "admin" && safeZone.createdBy.toString() !== req.userId) {
+      return res.status(403).json({ message: "You can only delete safe zones you created" });
+    }
+
+    await SafeZone.findByIdAndDelete(req.params.id);
 
     res.status(200).json({ message: "Safe zone deleted successfully" });
   } catch (error) {

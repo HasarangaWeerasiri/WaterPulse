@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const waterLogSchema = new mongoose.Schema({
   region: {
     type: String,
-    required: true,
+    required: false,
     index: true // Indexed for analytics queries
   },
   reportId: {

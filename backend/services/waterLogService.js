@@ -1,5 +1,6 @@
 import WaterLog from "../models/waterLog.js";
 import ContaminationReport from "../models/contaminationReport.js";
+import Task from "../models/task.js";
 import smsService from "./smsService.js"; // new SMS gateway helper
 
 /**
@@ -139,6 +140,19 @@ class WaterLogService {
       } else if (safetyRating === "Safe") {
         // Safe water quality → Status changes to 'Resolved'
         report.status = "Resolved";
+        
+        // Auto-complete the associated task when report is resolved
+        try {
+          const task = await Task.findOne({ reportId, status: { $ne: 'cancelled' } });
+          if (task) {
+            task.status = "completed";
+            task.completedAt = new Date();
+            await task.save();
+          }
+        } catch (taskError) {
+          console.warn(`Failed to auto-complete task for report ${reportId}:`, taskError.message);
+          // Don't throw - allow report status to still update even if task update fails
+        }
       }
       // Warning status does not change the report status automatically
 

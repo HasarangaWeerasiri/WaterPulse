@@ -2,6 +2,7 @@ import express from "express";
 import {
   createSafeZone,
   getAllSafeZones,
+  getMyCreatedSafeZones,
   getNearbySafeZones,
   getSafeZoneById,
   getSafeZoneWeather,
@@ -20,6 +21,17 @@ router.get("/all", getAllSafeZones);
 // GET /api/safe-zones/nearby?lat=&lng=&maxDistance=&limit=
 //   → 5 closest safe zones to the user's position
 router.get("/nearby", getNearbySafeZones);
+
+// ── Protected Routes (Admin / Authority only) ────────────────────────────────
+
+// GET /api/safe-zones/my-zones  →  safe zones created by the logged-in user
+// IMPORTANT: This route MUST come before /:id to avoid parameter conflict
+router.get(
+  "/my-zones",
+  verifyToken,
+  checkRole(["admin", "authority"]),
+  getMyCreatedSafeZones,
+);
 
 // GET /api/safe-zones/:id  →  single safe zone detail
 router.get("/:id", getSafeZoneById);

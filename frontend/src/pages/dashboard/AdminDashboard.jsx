@@ -7,6 +7,7 @@ import AdminReportsMap from "../../components/reports/AdminReportsMap";
 import AdminTaskDashboard from "./AdminTaskDashboard";
 import SafeZoneList from "../../components/reports/SafeZoneList";
 import SafeZonesMap from "../../components/reports/SafeZonesMap";
+import TaskListSection from "../../components/tasks/TaskListSection";
 import reportApi from "../../services/reportApi";
 import taskApi from "../../services/taskApi";
 import waterLogApi from "../../services/waterLogApi";
@@ -15,7 +16,8 @@ import { StatusBadge } from "../../components/reports/StatusBadge";
 export const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("reports");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -352,11 +354,9 @@ export const AdminDashboard = () => {
     }
   };
 
-  const tabs = ["overview", "create", "reports", "tasks", "waterlogs", "map"];
   const tabs = [
-    "overview",
-    "create",
     "reports",
+    "create",
     "tasks",
     "safezones",
     "safezones-map",
@@ -365,72 +365,73 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-[#eef2ff] to-[#f8fafc]">
+    <div className="h-screen flex overflow-hidden bg-gradient-to-br from-[#eef2ff] to-[#f8fafc]">
       {/* Sidebar */}
-      <div className="flex flex-col w-64 p-6 bg-white shadow-xl">
-        <h1 className="text-2xl font-bold text-[#00569c] mb-10">WaterPulse</h1>
+      {sidebarOpen && (
+        <div className="flex flex-col w-64 p-6 bg-gradient-to-br from-[#0a1628] via-[#0f2a4a] to-[#0d3d6b] shadow-xl h-screen sticky top-0 overflow-y-auto">
+          <h1 className="text-2xl font-bold text-white mb-10">WaterPulse</h1>
 
-        <div className="space-y-3">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`w-full text-left px-4 py-3 rounded-lg font-medium transition ${
-                activeTab === tab
-                  ? "bg-[#00569c] text-white shadow"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              {tab.toUpperCase()}
-            </button>
-          ))}
-
-          {/* Logout — sits just below MAP with a small gap */}
-          <div className="pt-1">
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full gap-2 px-4 py-3 font-medium text-white transition bg-red-500 rounded-lg hover:bg-red-600"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          <div className="space-y-3">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition ${
+                  activeTab === tab
+                    ? "bg-white/20 text-white shadow"
+                    : "text-white/70 hover:bg-white/10"
+                }`}
               >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Logout
-            </button>
+                {tab.toUpperCase()}
+              </button>
+            ))}
+
+            {/* Logout — sits just below MAP with a small gap */}
+            <div className="pt-1">
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full gap-2 px-4 py-3 font-medium text-white transition bg-red-500 rounded-lg hover:bg-red-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Logout
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
-      <div className="flex-1 p-8">
-        <h2 className="mb-6 text-3xl font-bold text-gray-800">
-          Welcome, {user?.firstName}
-        </h2>
-
-        {activeTab === "overview" && (
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="p-6 transition bg-white shadow rounded-xl hover:shadow-lg">
-              System running smoothly
-            </div>
-            <div className="p-6 transition bg-white shadow rounded-xl hover:shadow-lg">
-              Active users online
-            </div>
-            <div className="p-6 transition bg-white shadow rounded-xl hover:shadow-lg">
-              Role: {user?.role}
-            </div>
-          </div>
-        )}
+      <div className="flex-1 p-8 overflow-y-auto">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+          <h2 className="text-3xl font-bold text-gray-800">
+            Welcome, {user?.firstName}
+          </h2>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            className="inline-flex items-center justify-center p-2 transition rounded-lg hover:bg-gray-100"
+          >
+            <img
+              src="/menuBlack.png"
+              alt="Menu"
+              className="w-6 h-6"
+            />
+          </button>
+        </div>
 
         {activeTab === "create" && (
           <div className="max-w-3xl p-8 bg-white shadow-xl rounded-xl">
@@ -536,137 +537,7 @@ export const AdminDashboard = () => {
 
         {activeTab === "reports" && <AdminReportList />}
 
-        {activeTab === "tasks" && <AdminTaskDashboard />}
-
-        {activeTab === "tasks" && (
-          <div className="p-6 bg-white shadow rounded-xl">
-            <h3 className="text-2xl font-bold text-[#00569c] mb-4">
-              Create Task (Admin)
-            </h3>
-
-            {loadingTaskForm ? (
-              <div className="p-4 text-gray-600">
-                Loading pending reports and authorities...
-              </div>
-            ) : (
-              <form onSubmit={handleCreateTask} className="space-y-4">
-                {taskSubmitError && (
-                  <div className="p-4 rounded-lg bg-red-50 border border-red-200">
-                    <p className="text-red-700">{taskSubmitError}</p>
-                  </div>
-                )}
-                {taskSubmitSuccess && (
-                  <div className="p-4 rounded-lg bg-green-50 border border-green-200">
-                    <p className="text-green-700">{taskSubmitSuccess}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block mb-2 text-sm font-semibold text-gray-700">
-                    Report
-                  </label>
-                  <select
-                    className="input"
-                    value={selectedReportId}
-                    onChange={(e) => handleSelectReport(e.target.value)}
-                  >
-                    <option value="">Select a pending report</option>
-                    {pendingReports.map((r) => (
-                      <option key={r._id} value={r._id}>
-                        {r.title} {r.address ? `(${r.address})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block mb-2 text-sm font-semibold text-gray-700">
-                      Assign To
-                    </label>
-                    <select
-                      className="input"
-                      value={assignedTo}
-                      onChange={(e) => setAssignedTo(e.target.value)}
-                    >
-                      <option value="">Select authority</option>
-                      {authorities.map((a) => (
-                        <option key={a._id} value={a._id}>
-                          {a.firstName} {a.lastName} (
-                          {a.location?.district || "Unknown district"})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm font-semibold text-gray-700">
-                      Priority
-                    </label>
-                    <select
-                      className="input"
-                      value={priority}
-                      onChange={(e) => setPriority(e.target.value)}
-                    >
-                      <option value="low">low</option>
-                      <option value="medium">medium</option>
-                      <option value="high">high</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-sm font-semibold text-gray-700">
-                    Task Title
-                  </label>
-                  <input
-                    className="input"
-                    value={taskTitle}
-                    onChange={(e) => setTaskTitle(e.target.value)}
-                    placeholder="e.g., Investigate contamination report"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-sm font-semibold text-gray-700">
-                    Description (optional)
-                  </label>
-                  <textarea
-                    className="input"
-                    style={{ height: 110 }}
-                    value={taskDescription}
-                    onChange={(e) => setTaskDescription(e.target.value)}
-                    placeholder="Add any notes for the authority team..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block mb-2 text-sm font-semibold text-gray-700">
-                      Due Date (optional)
-                    </label>
-                    <input
-                      type="date"
-                      className="input"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      type="submit"
-                      disabled={submittingTask}
-                      className="w-full py-3 bg-[#00569c] text-white rounded-lg hover:bg-[#003f73] transition disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {submittingTask ? "Creating..." : "Create Task"}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            )}
-          </div>
-        )}
+        {activeTab === "tasks" && <TaskListSection />}
 
         {activeTab === "safezones" && (
           <div className="p-6 bg-white shadow rounded-xl">
@@ -922,20 +793,7 @@ export const AdminDashboard = () => {
         )}
       </div>
 
-      <style jsx>{`
-        .input {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          outline: none;
-          transition: 0.3s;
-        }
-        .input:focus {
-          border-color: #00569c;
-          box-shadow: 0 0 0 2px rgba(0, 86, 156, 0.2);
-        }
-      `}</style>
+
     </div>
   );
 };

@@ -5,6 +5,16 @@ const TASK_API_BASE_URL = 'http://localhost:5000/api/tasks';
 // Task API wrapper for admin and authority users
 // Handles all task-related API operations
 export const taskApi = {
+  async getTasks() {
+    const response = await axios.get(`${TASK_API_BASE_URL}/`);
+    return response.data;
+  },
+
+  async getTaskById(id) {
+    const response = await axios.get(`${TASK_API_BASE_URL}/${id}`);
+    return response.data;
+  },
+
   // Admin: Create a new task
   async createTask(payload) {
     const response = await axios.post(TASK_API_BASE_URL + '/', payload);
@@ -30,9 +40,9 @@ export const taskApi = {
     return response.data;
   },
 
-  // Get single task by ID
-  async getTaskById(id) {
-    const response = await axios.get(`${TASK_API_BASE_URL}/${id}`);
+  // Update task fields (admin only)
+  async updateTask(id, payload) {
+    const response = await axios.put(`${TASK_API_BASE_URL}/${id}`, payload);
     return response.data;
   },
 
@@ -41,12 +51,6 @@ export const taskApi = {
   async updateTaskStatus(id, status, additionalData = {}) {
     const payload = { status, ...additionalData };
     const response = await axios.put(`${TASK_API_BASE_URL}/${id}/status`, payload);
-    return response.data;
-  },
-
-  // Update task fields (admin only)
-  async updateTask(id, payload) {
-    const response = await axios.put(`${TASK_API_BASE_URL}/${id}`, payload);
     return response.data;
   },
 
