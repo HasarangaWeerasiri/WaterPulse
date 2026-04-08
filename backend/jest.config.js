@@ -10,6 +10,10 @@ export default {
     "services/taskService.js",
     "controllers/taskController.js",
     "models/task.js",
+    "services/reportService.js",
+    "controllers/reportController.js",
+    "models/contaminationReport.js",
+    "routes/reportRoutes.js",
     "!**/node_modules/**",
     "!**/vendor/**"
   ],
