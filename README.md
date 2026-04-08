@@ -275,30 +275,30 @@ NODE_ENV=development
 
 # ========== DATABASE ==========
 # MongoDB Atlas URL or local MongoDB
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/waterpulse?retryWrites=true&w=majority
+MONGO_URI
 
 # ========== SECURITY ==========
 # JWT Secret (change in production to strong random string)
 # Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-JWT_SECRET=waterpulse_super_secret_key_change_in_production
+JWT_SECRET
 
 # ========== EMAIL SERVICE (Resend) ==========
 # Get API key from: https://resend.com
-RESEND_API_KEY=re_jcEKw5Ds_bgpijHUnkrKhzieBsmV9vEzd
-RESEND_FROM_EMAIL=WaterPulse <noreply@fxjpro.com>
+RESEND_API_KEY
+RESEND_FROM_EMAIL
 
 # ========== WEATHER & LOCATION SERVICE ==========
 # OpenWeatherMap: https://openweathermap.org (free tier: 1000 calls/day)
-OPENWEATHER_API_KEY=a1d8b4f094fbfcdab48a32bb09f6fcd2
+OPENWEATHER_API_KEY
 
 # Nominatim (OpenStreetMap) - Free, no key required
 # User-Agent for Nominatim requests
-NOMINATIM_USER_AGENT=WaterPulseApp/1.0 (sanjulakalpani1212@gmail.com)
+NOMINATIM_USER_AGENT
 
 # ========== SMS SERVICE (SMS8.io) ==========
 # Get API key from: https://sms8.io
-SMS8_API_KEY=035b9dc8c9a1bb1150c1bf475482969f1f1a9914
-SMS8_DEVICE_ID=9023
+SMS8_API_KEY
+SMS8_DEVICE_ID
 ```
 
 ### Frontend `.env` (Optional - for production)
