@@ -7,6 +7,10 @@ export default {
     "controllers/waterLogController.js",
     "models/waterLog.js",
     "routes/waterLogRoutes.js",
+    "services/reportService.js",
+    "controllers/reportController.js",
+    "models/contaminationReport.js",
+    "routes/reportRoutes.js",
     "!**/node_modules/**",
     "!**/vendor/**"
   ],

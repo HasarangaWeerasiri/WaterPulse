@@ -1,0 +1,53 @@
+config:
+	target: "http://localhost:5000"
+	phases:
+		# ~50-100 concurrent-like users over time
+		- duration: 30
+			arrivalRate: 5
+			name: "Warm up"
+		- duration: 60
+			arrivalRate: 10
+			name: "Ramp up"
+		- duration: 60
+			arrivalRate: 20
+			name: "Peak load"
+	defaults:
+		headers:
+			Content-Type: "application/json"
+			# This token is a dummy value; auth is mocked or disabled in test env
+			Authorization: "Bearer test-performance-token"
+	ensure:
+		maxResponseTime: 1000   # ms, basic response-time check
+
+scenarios:
+	- name: "Create and fetch contamination reports"
+		flow:
+			# Simulate citizens creating reports
+			- post:
+					url: "/api/reports"
+					json:
+						title: "Performance Test Report"
+						description: "Load test contamination report creation"
+						latitude: 7.0
+						longitude: 80.0
+			- think: 1
+			# Fetch all reports (admin/authority dashboard style)
+			- get:
+					url: "/api/reports/all"
+			- think: 1
+			# Fetch confirmed and pending lists
+			- get:
+					url: "/api/reports/confirmed"
+			- think: 1
+			- get:
+					url: "/api/reports/pending"
+
+	- name: "Geo radius queries"
+		weight: 2
+		flow:
+			- get:
+					url: "/api/reports?lat=7.0&lng=80.0&radius=5"
+			- think: 1
+			- get:
+					url: "/api/reports?lat=7.1&lng=80.1&radius=10"
+
