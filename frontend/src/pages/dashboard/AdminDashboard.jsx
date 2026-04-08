@@ -17,6 +17,7 @@ export const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -365,58 +366,73 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-[#eef2ff] to-[#f8fafc]">
+    <div className="h-screen flex overflow-hidden bg-gradient-to-br from-[#eef2ff] to-[#f8fafc]">
       {/* Sidebar */}
-      <div className="flex flex-col w-64 p-6 bg-white shadow-xl">
-        <h1 className="text-2xl font-bold text-[#00569c] mb-10">WaterPulse</h1>
+      {sidebarOpen && (
+        <div className="flex flex-col w-64 p-6 bg-gradient-to-br from-[#0a1628] via-[#0f2a4a] to-[#0d3d6b] shadow-xl h-screen sticky top-0 overflow-y-auto">
+          <h1 className="text-2xl font-bold text-white mb-10">WaterPulse</h1>
 
-        <div className="space-y-3">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`w-full text-left px-4 py-3 rounded-lg font-medium transition ${
-                activeTab === tab
-                  ? "bg-[#00569c] text-white shadow"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              {tab.toUpperCase()}
-            </button>
-          ))}
-
-          {/* Logout — sits just below MAP with a small gap */}
-          <div className="pt-1">
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full gap-2 px-4 py-3 font-medium text-white transition bg-red-500 rounded-lg hover:bg-red-600"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          <div className="space-y-3">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition ${
+                  activeTab === tab
+                    ? "bg-white/20 text-white shadow"
+                    : "text-white/70 hover:bg-white/10"
+                }`}
               >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Logout
-            </button>
+                {tab.toUpperCase()}
+              </button>
+            ))}
+
+            {/* Logout — sits just below MAP with a small gap */}
+            <div className="pt-1">
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full gap-2 px-4 py-3 font-medium text-white transition bg-red-500 rounded-lg hover:bg-red-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Logout
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
-      <div className="flex-1 p-8">
-        <h2 className="mb-6 text-3xl font-bold text-gray-800">
-          Welcome, {user?.firstName}
-        </h2>
+      <div className="flex-1 p-8 overflow-y-auto">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+          <h2 className="text-3xl font-bold text-gray-800">
+            Welcome, {user?.firstName}
+          </h2>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            className="inline-flex items-center justify-center p-2 transition rounded-lg hover:bg-gray-100"
+          >
+            <img
+              src="/menuBlack.png"
+              alt="Menu"
+              className="w-6 h-6"
+            />
+          </button>
+        </div>
 
         {activeTab === "overview" && (
           <div className="grid gap-6 md:grid-cols-3">

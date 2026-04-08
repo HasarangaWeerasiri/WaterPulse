@@ -34,12 +34,15 @@ function App() {
   }
 
   // Pages where the navbar should float over the content (no top padding needed)
-  const fullBleedRoutes = ["/"];
+  const fullBleedRoutes = ["/", "/admin-dashboard", "/authority-dashboard"];
   const isFullBleed = fullBleedRoutes.includes(location.pathname);
+  const showNavbar = !["/admin-dashboard", "/authority-dashboard"].includes(
+    location.pathname,
+  );
 
   return (
     <>
-      <Navbar />
+      {showNavbar && <Navbar />}
       {/* Only add top padding on non-fullbleed pages so content isn't hidden behind fixed navbar */}
       <div className={isFullBleed ? "" : "pt-24"}>
         <Routes>
