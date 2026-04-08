@@ -1,0 +1,88 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 10
+      name: "Ramp up"
+    - duration: 60
+      arrivalRate: 20
+      name: "Sustained load"
+    - duration: 30
+      arrivalRate: 5
+      name: "Cool down"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2MDAwMDAwMDAwMDAwMDAwMDAwMDAwMSIsImlhdCI6MTcxNDAwMDAwMH0.test_token_for_load_testing"
+  processor: "./loadTestProcessor.js"
+  variables:
+    reportId: "660000000000000000000001"
+    authorityId: "660000000000000000000002"
+    taskId: "660000000000000000000003"
+
+scenarios:
+  - name: "Task Management API Load Test"
+    flow:
+      - post:
+          url: "/api/tasks"
+          json:
+            reportId: "{{ reportId }}"
+            assignedTo: "{{ authorityId }}"
+            priority: "high"
+            title: "Investigate Water Contamination"
+            description: "Site inspection required"
+      - think: 2
+      - get:
+          url: "/api/tasks"
+      - think: 1
+      - get:
+          url: "/api/tasks?status=pending"
+      - think: 1
+      - get:
+          url: "/api/tasks/authorities"
+
+  - name: "Task Filtering Load Test"
+    weight: 2
+    flow:
+      - get:
+          url: "/api/tasks"
+      - think: 1
+      - get:
+          url: "/api/tasks?status=in_progress"
+      - think: 1
+      - get:
+          url: "/api/tasks?priority=high"
+      - think: 1
+      - get:
+          url: "/api/tasks?status=pending&priority=high"
+
+  - name: "Task Status Update Load Test"
+    weight: 1
+    flow:
+      - post:
+          url: "/api/tasks"
+          json:
+            reportId: "{{ reportId }}"
+            assignedTo: "{{ authorityId }}"
+            priority: "medium"
+            title: "Load Test Task"
+            description: "Created for load testing"
+          capture:
+            - json: "$.task._id"
+              as: "createdTaskId"
+      - think: 2
+      - put:
+          url: "/api/tasks/{{ createdTaskId }}/status"
+          json:
+            status: "in_progress"
+      - think: 1
+      - put:
+          url: "/api/tasks/{{ createdTaskId }}/status"
+          json:
+            status: "completed"
+      - think: 1
+      - delete:
+          url: "/api/tasks/{{ createdTaskId }}"
