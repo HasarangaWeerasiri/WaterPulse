@@ -16,7 +16,16 @@
     "perf:waterlog:load": "artillery run tests/waterLogs_Tests/performance/loadTest.artillery.yml",
     "perf:waterlog:benchmark": "node tests/waterLogs_Tests/performance/benchmarks.js",
     "perf:waterlog:memory": "node tests/waterLogs_Tests/performance/memoryProfile.js",
-    "perf:waterlog:all": "npm run perf:waterlog:benchmark && npm run perf:waterlog:memory"
+    "perf:waterlog:all": "npm run perf:waterlog:benchmark && npm run perf:waterlog:memory",
+    "test:task": "jest tests/task_Tests",
+    "test:task:unit": "jest tests/task_Tests/unit",
+    "test:task:integration": "jest tests/task_Tests/integration",
+    "test:task:watch": "jest tests/task_Tests --watch",
+    "test:task:coverage": "jest tests/task_Tests --coverage",
+    "perf:task:benchmark": "node tests/task_Tests/performance/benchmarks.js",
+    "perf:task:memory": "node tests/task_Tests/performance/memoryProfile.js",
+    "perf:task:load": "artillery run tests/task_Tests/performance/loadTest.artillery.yml",
+    "perf:task:all": "npm run perf:task:benchmark && npm run perf:task:memory"
   },
   "keywords": [],
   "author": "",

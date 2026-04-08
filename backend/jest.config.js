@@ -7,6 +7,9 @@ export default {
     "controllers/waterLogController.js",
     "models/waterLog.js",
     "routes/waterLogRoutes.js",
+    "services/taskService.js",
+    "controllers/taskController.js",
+    "models/task.js",
     "!**/node_modules/**",
     "!**/vendor/**"
   ],
